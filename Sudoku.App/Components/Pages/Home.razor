@@ -1,0 +1,62 @@
+﻿@page "/"
+@using Sudoku.App.Services.Contracts
+@using Sudoku.App.Helpers
+@using Sudoku.App.Enums
+@inject ISudokuService SudokuService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<div class="container">
+    <SudokuBoard Board="_board" />
+    <button @onclick="Solve" class="btn btn-primary">Solve</button>
+</div>
+
+@code {
+    
+    SudokuCell[,] _board = new SudokuCell[9, 9];
+
+    protected override void OnInitialized()
+    {
+        // var tmp = new[,]
+        // {
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        // };
+        //
+        // // Initialize the board with a sample puzzle
+        // for (var i = 0; i < 9; i++)
+        // {
+        //     for (var j = 0; j < 9; j++)
+        //     {
+        //         _board[i, j] = new SudokuCell
+        //         {
+        //             Value = (SudokuDigit)tmp[i, j],
+        //             IsFixed = tmp[i, j] != 0
+        //         };
+        //     }
+        // }
+    }
+
+    private void Solve()
+    {
+        var stopwatch = new System.Diagnostics.Stopwatch();
+        stopwatch.Start();
+        
+        _board = SudokuService.Solve(_board);
+        stopwatch.Stop();
+        var microseconds = stopwatch.ElapsedTicks / (System.Diagnostics.Stopwatch.Frequency / (1000L*1000L));
+        Console.WriteLine($"Solving took {microseconds}μs");
+    }
+}
