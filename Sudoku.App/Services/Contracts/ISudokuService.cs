@@ -12,8 +12,6 @@ public interface ISudokuService
     /// </summary>
     /// <param name="cells">Board to solve. Method assumes the board is 9x9</param>
     /// <returns>Solved board, or null if it's unsolvable</returns>
-    SudokuDigit[,]? Solve(SudokuDigit[,] cells);
-    
     SudokuCell[,]? Solve(SudokuCell[,] cells);
     
     /// <summary>

@@ -5,6 +5,7 @@ using Sudoku.App.Repositories;
 using Sudoku.App.Repositories.Contracts;
 using Sudoku.App.Services;
 using Sudoku.App.Services.Contracts;
+using Sudoku.App.Services.SudokuService;
 
 var builder = WebApplication.CreateBuilder(args);
 
