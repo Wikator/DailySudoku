@@ -15,14 +15,10 @@ public class SudokuCell
             if (IsFixed)
                 throw new InvalidOperationException("Cannot change the value of a fixed cell.");
 
+            if (Equals(_value, value))
+                return;
+            
             _value = value;
         }
     }
-
-    public SudokuCell Clone() =>
-        new()
-        {
-            IsFixed = IsFixed,
-            _value = _value
-        };
 }

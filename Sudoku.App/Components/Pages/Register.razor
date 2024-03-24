@@ -1,0 +1,85 @@
+@page "/register"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Sudoku.App.Repositories.Contracts
+@inject IAppUserRepository AppUserRepository
+@inject NavigationManager NavigationManager
+
+<div class="container">
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger">
+            @_errorMessage
+        </div>
+    }
+    
+    <EditForm method="post" Model="RegisterModel" OnValidSubmit="RegisterUser" FormName="Register" >
+        <DataAnnotationsValidator />
+        
+        <div class="form-group">
+            <label for="Email">Email</label>
+            <InputText id="Email" class="form-control" @bind-Value="RegisterModel.Email" type="email"/>
+            <ValidationMessage For="@(() => RegisterModel.Email)"/>
+        </div>
+        <div class="form-group">
+            <label for="UserName">Username</label>
+            <InputText id="UserName" class="form-control" @bind-Value="RegisterModel.UserName"/>
+            <ValidationMessage For="@(() => RegisterModel.UserName)"/>
+        </div>
+        <div class="form-group">
+            <label for="Password">Password</label>
+            <InputText id="Password" class="form-control" @bind-Value="RegisterModel.Password" type="password"/>
+            <ValidationMessage For="@(() => RegisterModel.Password)"/>
+        </div>
+        <div class="form-group">
+            <label for="ConfirmPassword">Confirm Password</label>
+            <InputText id="ConfirmPassword" class="form-control" @bind-Value="RegisterModel.ConfirmPassword" type="password"/>
+            <ValidationMessage For="@(() => RegisterModel.ConfirmPassword)"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Register</button>
+    </EditForm>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+    
+    [SupplyParameterFromForm]
+    private RegisterModel RegisterModel { get; set; } = new();
+    
+    private string _errorMessage = string.Empty;
+    
+    
+    private async Task RegisterUser()
+    {
+        if (HttpContext is null)
+            return;
+
+        if (await AppUserRepository.UserNameExistsAsync(RegisterModel.UserName))
+        {
+            _errorMessage = "Username already exists";
+            return;
+        }
+
+        if (await AppUserRepository.EmailExistsAsync(RegisterModel.Email))
+        {
+            _errorMessage = "Email already exists";
+            return;
+        }
+        
+        var currentUser = await AppUserRepository.RegisterAsync(RegisterModel);
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, currentUser.UserName),
+            new(ClaimTypes.Email, currentUser.Email),
+            new(ClaimTypes.NameIdentifier, currentUser.Id.ToString())
+        };
+        
+        var principal = new ClaimsPrincipal(
+            new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+
+        await HttpContext.SignInAsync(principal);
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -1,5 +1,6 @@
 @using Sudoku.App.Helpers
 @using Sudoku.App.Enums
+@rendermode InteractiveServer
 
 @if (Board is not null)
 {
@@ -26,6 +27,7 @@
 
 @code {
     [Parameter] public SudokuCell[,]? Board { get; set; }
+    [Parameter] public EventCallback<(int, int)> OnCellValueChanged { get; set; }
     private readonly ElementReference[,] _cellRefs = new ElementReference[9, 9];
 
     protected override void OnInitialized()
@@ -48,14 +50,17 @@
             }
         }
     }
-    
+
     private void HandleKeyDown(KeyboardEventArgs e, int row, int col)
     {
         if (Board is null || !int.TryParse(e.Key, out var number))
             return;
+
+        if (Board[row, col].IsFixed)
+            return;
         
-        if (!Board[row, col].IsFixed)
-            Board[row, col].Value = (SudokuDigit)number;
+        Board[row, col].Value = (SudokuDigit)number;
+        OnCellValueChanged.InvokeAsync((row, col));
     }
 
     private async Task Focus(int i, int j)

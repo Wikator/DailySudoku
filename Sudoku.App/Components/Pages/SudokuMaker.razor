@@ -1,0 +1,85 @@
+@page "/sudoku/maker"
+@using Microsoft.AspNetCore.Authorization
+@using Sudoku.App.Enums
+@using System.Security.Claims
+@using Sudoku.App.Extensions
+@using Sudoku.App.Helpers
+@inject ISudokuRepository SudokuRepository
+@inject ISudokuService SudokuService
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<div class="container">
+    <h1 class="text-center">Sudoku Maker</h1>
+
+    @switch (_solutions)
+    {
+        case Solutions.NoSolution:
+            <div class="alert alert-danger">
+            No solutions
+        </div>
+            break;
+        case Solutions.OneSolution:
+            <div class="alert alert-success">
+            One solution
+        </div>
+            break;
+        case Solutions.MultipleSolutions:
+        default:
+            <div class="alert alert-warning">
+            Multiple solutions
+        </div>
+            break;
+    }
+
+    <SudokuBoard Board="Board" OnCellValueChanged="HowManySolutions"/>
+    
+    <div class="text-center">
+        <button class="btn btn-primary" @onclick="Save">Save</button>
+    </div>
+</div>
+
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+    private Solutions _solutions = Solutions.MultipleSolutions;
+    
+    private SudokuCell[,] Board { get; } = new SudokuCell[9, 9];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        for (var i = 0; i < 9; i++)
+        {
+            for (var j = 0; j < 9; j++)
+            {
+                Board[i, j] = new SudokuCell
+                {
+                    IsFixed = false,
+                    Value = SudokuDigit.Empty
+                };
+            }
+        }
+    }
+
+    private void HowManySolutions((int, int) coords)
+    {
+        _solutions = SudokuService.SolutionCount(Board.ToDigits());
+    }
+
+    private async Task Save()
+    {
+        if (AuthState is null)
+            return;
+        
+        var authState = await AuthState;
+        var user = authState.User;
+        var id = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+
+        await SudokuRepository.CreateSudokuAsync(Board.ToDigits(), _solutions, id);
+    }
+
+}

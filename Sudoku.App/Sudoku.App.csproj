@@ -6,4 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Neo4j.Driver" Version="5.18.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Models\Nodes\" />
+    </ItemGroup>
+
 </Project>

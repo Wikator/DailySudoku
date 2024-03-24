@@ -22,31 +22,31 @@ Welcome to your new app.
 
     protected override void OnInitialized()
     {
-        // var tmp = new[,]
-        // {
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        //     { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        // };
-        //
-        // // Initialize the board with a sample puzzle
-        // for (var i = 0; i < 9; i++)
-        // {
-        //     for (var j = 0; j < 9; j++)
-        //     {
-        //         _board[i, j] = new SudokuCell
-        //         {
-        //             Value = (SudokuDigit)tmp[i, j],
-        //             IsFixed = tmp[i, j] != 0
-        //         };
-        //     }
-        // }
+        var tmp = new[,]
+        {
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        };
+        
+        // Initialize the board with a sample puzzle
+        for (var i = 0; i < 9; i++)
+        {
+            for (var j = 0; j < 9; j++)
+            {
+                _board[i, j] = new SudokuCell
+                {
+                    Value = (SudokuDigit)tmp[i, j],
+                    IsFixed = tmp[i, j] != 0
+                };
+            }
+        }
     }
 
     private void Solve()

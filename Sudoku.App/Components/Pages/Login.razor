@@ -1,0 +1,69 @@
+@page "/login"
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using System.Security.Claims
+@using Sudoku.App.Repositories.Contracts
+@inject IAppUserRepository AppUserRepository
+@inject NavigationManager NavigationManager
+
+<div class="container">
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger">
+            @_errorMessage
+        </div>
+    }
+    
+    <EditForm method="post" Model="LoginModel" OnValidSubmit="LoginUser" FormName="Register" >
+        <DataAnnotationsValidator />
+        
+        <div class="form-group">
+            <label for="Email">Email</label>
+            <InputText id="Email" class="form-control" @bind-Value="LoginModel.Email" type="email"/>
+            <ValidationMessage For="@(() => LoginModel.Email)"/>
+        </div>
+        <div class="form-group">
+            <label for="Password">Password</label>
+            <InputText id="Password" class="form-control" @bind-Value="LoginModel.Password" type="password"/>
+            <ValidationMessage For="@(() => LoginModel.Password)"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+    </EditForm>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+    
+    [SupplyParameterFromForm]
+    private LoginModel LoginModel { get; set; } = new();
+    
+    private string _errorMessage = string.Empty;
+
+    private async Task LoginUser()
+    {
+        if (HttpContext is null)
+            return;
+        
+        var currentUser = await AppUserRepository.LoginAsync(LoginModel);
+
+        if (currentUser is null)
+        {
+            _errorMessage = "Invalid username or password";
+            return;
+        }
+        
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, currentUser.UserName),
+            new(ClaimTypes.Email, currentUser.Email),
+            new(ClaimTypes.NameIdentifier, currentUser.Id.ToString())
+        };
+        
+        var principal = new ClaimsPrincipal(
+            new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+
+        await HttpContext.SignInAsync(principal);
+        NavigationManager.NavigateTo("/");
+    }
+}
