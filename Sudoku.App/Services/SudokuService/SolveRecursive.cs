@@ -124,12 +124,12 @@ public partial class SudokuService
         }
         
         // If all cells have 0 possible digits, the board is solved.
-        if (lowestPossibleCoords is null)
+        if (!lowestPossibleCoords.HasValue)
             return cells;
         
         // At this point, algorithm needs to "guess" the digits and backtrack, if the guessed digit was incorrect.
         // Each possible digit is attempted to be filled in the previously found cell.
-        foreach (var digit in possibleDigits[lowestPossibleCoords.Row, lowestPossibleCoords.Column])
+        foreach (var digit in possibleDigits[lowestPossibleCoords.Value.Row, lowestPossibleCoords.Value.Column])
         {
             // To avoid the first step of the algorithm, the possibleDigits array is deep copied, so that it can be
             // used in the next iteration.
@@ -148,7 +148,7 @@ public partial class SudokuService
             // Copied possibleDigits array is given here instead of the original one, because the original array
             // is no longer needed, and the copy, which will be used by the next recursive call, needs to be updated
             // to reflect the guessed fill.
-            if (!AutoFill(cells, lowestPossibleCoords, digit, copiedPossibleDigits))
+            if (!AutoFill(cells, lowestPossibleCoords.Value, digit, copiedPossibleDigits))
                 continue;
             
             // Recursive call is made, with possibleDigitsCopy provided to avoid first step of the algorithm.
@@ -163,7 +163,7 @@ public partial class SudokuService
         // If no possible digit solves the board, the board is unsolvable.
         // Since the backtracking operation did not update modifiedCells for performance reasons, the cell
         // is manually reverted to its original, empty state.
-        cells.Set(lowestPossibleCoords, SudokuDigit.Empty);
+        cells.Set(lowestPossibleCoords.Value, SudokuDigit.Empty);
         return NoSolution();
         
         // This local function is called everytime the board is unsolvable.

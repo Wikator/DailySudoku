@@ -21,7 +21,7 @@ public interface ISudokuService
     /// </summary>
     /// <param name="cells">9x9 board to solve.</param>
     /// <returns>Solved board, or null if it's either unsolvable, or original board contained errors</returns>
-    SudokuDigit[,]? ValidateAndSolve(SudokuDigit[,] cells);
+    SudokuCell[,]? ValidateAndSolve(SudokuCell[,] cells);
 
     /// <summary>
     /// Generates completely random sudoku board, with only 1 possible solution.

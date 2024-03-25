@@ -14,6 +14,11 @@ public partial class SudokuService : ISudokuService
         return SolveRecursive(cells);
     }
 
+    private SudokuDigit[,]? ValidateAndSolve(SudokuDigit[,] cells)
+    {
+        return !CheckBoardValidity(cells) ? null : Solve(cells);
+    }
+
     public SudokuCell[,]? Solve(SudokuCell[,] cells)
     {
         var sudokuDigits = new SudokuDigit[BoardSize, BoardSize];
@@ -45,13 +50,38 @@ public partial class SudokuService : ISudokuService
         return solvedCells;
     }
 
-    public SudokuDigit[,]? ValidateAndSolve(SudokuDigit[,] cells)
+    public SudokuCell[,]? ValidateAndSolve(SudokuCell[,] cells)
     {
-        if (!CheckBoardValidity(cells))
+        var sudokuDigits = new SudokuDigit[BoardSize, BoardSize];
+        for (var i = 0; i < BoardSize; i++)
+        {
+            for (var j = 0; j < BoardSize; j++)
+            {
+                sudokuDigits[i, j] = cells[i, j].Value;
+            }
+        }
+
+        if (!CheckBoardValidity(sudokuDigits))
             return null;
 
-        var copy = DeepCopy(cells);
-        return SolveRecursive(copy);
+        var result = Solve(sudokuDigits);
+        if (result is null)
+            return null;
+
+        var solvedCells = new SudokuCell[BoardSize, BoardSize];
+        for (var i = 0; i < BoardSize; i++)
+        {
+            for (var j = 0; j < BoardSize; j++)
+            {
+                solvedCells[i, j] = new SudokuCell
+                {
+                    Value = result[i, j],
+                    IsFixed = cells[i, j].IsFixed
+                };
+            }
+        }
+
+        return solvedCells;
     }
     
     public Solutions SolutionCount(SudokuDigit[,] originalCells)

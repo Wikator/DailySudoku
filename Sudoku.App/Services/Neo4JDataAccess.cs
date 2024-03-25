@@ -56,10 +56,4 @@ public class Neo4JDataAccess(IDriver driver) : INeo4JDataAccess, IAsyncDisposabl
         await Session.DisposeAsync();
         GC.SuppressFinalize(this);
     }
-
-    void IDisposable.Dispose()
-    {
-        Session.Dispose();
-        GC.SuppressFinalize(this);
-    }
 }

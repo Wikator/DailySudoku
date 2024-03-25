@@ -94,11 +94,11 @@ public partial class SudokuService
             }
         }
         
-        if (lowestPossibleCoords is null)
+        if (!lowestPossibleCoords.HasValue)
             return OneSolution();
 
         var alreadyFound = false;
-        foreach (var digit in possibleDigits[lowestPossibleCoords.Row, lowestPossibleCoords.Column])
+        foreach (var digit in possibleDigits[lowestPossibleCoords.Value.Row, lowestPossibleCoords.Value.Column])
         {
             var copiedPossibleDigits = new HashSet<SudokuDigit>[BoardSize, BoardSize];
             
@@ -111,7 +111,7 @@ public partial class SudokuService
                 }
             }
             
-            if (!AutoFill(cells, lowestPossibleCoords, digit, copiedPossibleDigits))
+            if (!AutoFill(cells, lowestPossibleCoords.Value, digit, copiedPossibleDigits))
                 continue;
             
             var result =  SolutionCountRecursive(cells, copiedPossibleDigits);
@@ -135,7 +135,7 @@ public partial class SudokuService
             }
         }
         
-        cells.Set(lowestPossibleCoords, SudokuDigit.Empty);
+        cells.Set(lowestPossibleCoords.Value, SudokuDigit.Empty);
         return alreadyFound ? OneSolution() : NoSolution();
 
         Solutions NoSolution()

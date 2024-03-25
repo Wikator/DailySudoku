@@ -32,6 +32,7 @@ public static class ArrayExtensions
             for (var j = 0; j < array.GetLength(1); j++)
             {
                 array[i, j] = value;
+                
             }
         }
     }

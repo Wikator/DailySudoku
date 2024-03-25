@@ -1,5 +1,4 @@
 ﻿@page "/"
-@using Sudoku.App.Services.Contracts
 @using Sudoku.App.Helpers
 @using Sudoku.App.Enums
 @inject ISudokuService SudokuService
@@ -12,13 +11,21 @@
 Welcome to your new app.
 
 <div class="container">
-    <SudokuBoard Board="_board" />
+    @if(_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_error
+        </div>
+    }
+    
+    <SudokuBoard Board="_board"/>
     <button @onclick="Solve" class="btn btn-primary">Solve</button>
 </div>
 
 @code {
     
     SudokuCell[,] _board = new SudokuCell[9, 9];
+    string? _error;
 
     protected override void OnInitialized()
     {
@@ -53,8 +60,19 @@ Welcome to your new app.
     {
         var stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
+
+        var result = SudokuService.ValidateAndSolve(_board);
+
+        if (result is null)
+        {
+            _error = "No solution found";
+        }
+        else
+        {
+            _error = null;
+            _board = result;
+        }
         
-        _board = SudokuService.Solve(_board);
         stopwatch.Stop();
         var microseconds = stopwatch.ElapsedTicks / (System.Diagnostics.Stopwatch.Frequency / (1000L*1000L));
         Console.WriteLine($"Solving took {microseconds}μs");
