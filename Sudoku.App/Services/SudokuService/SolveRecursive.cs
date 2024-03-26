@@ -1,12 +1,12 @@
 using Sudoku.App.Enums;
-using Sudoku.App.Extensions;
 using Sudoku.App.Helpers;
 
 namespace Sudoku.App.Services.SudokuService;
 
 public partial class SudokuService
 {
-    private static SudokuDigit[,]? SolveRecursive(SudokuDigit[,] cells, HashSet<SudokuDigit>[,]? possibleDigits = null)
+    private static SudokuBoard<SudokuDigit>? SolveRecursive(SudokuBoard<SudokuDigit> board,
+        SudokuBoard<HashSet<SudokuDigit>>? possibleDigits = null)
     {
         // Initialize hashset that stores which digits were modified in the current recursive call, so that they can be
         // reverted if backtracking is needed.
@@ -18,7 +18,7 @@ public partial class SudokuService
         // It is assumed that given possibleDigits follow this rule.
         if (possibleDigits is null)
         {
-            possibleDigits = new HashSet<SudokuDigit>[BoardSize, BoardSize];
+            possibleDigits = new SudokuBoard<HashSet<SudokuDigit>>();
             for (var row = 0; row < BoardSize; row++)
             {
                 for (var col = 0; col < BoardSize; col++)
@@ -29,15 +29,15 @@ public partial class SudokuService
                     // If space is already filled, possible digits are set to none, to follow the rule established
                     // above.
                     var cellCoords = new Coords(row, col);
-                    if (cells.Get(cellCoords) == SudokuDigit.Empty)
+                    if (board[cellCoords]== SudokuDigit.Empty)
                     {
-                        possibleDigits.Set(cellCoords, AllDigits());
-                        if (!GetPossibleDigits(cells, cellCoords, possibleDigits.Get(cellCoords)))
+                        possibleDigits[cellCoords] = AllDigits();
+                        if (!GetPossibleDigits(board, cellCoords, possibleDigits[cellCoords]))
                             return NoSolution();
                     }
                     else
                     {
-                        possibleDigits.Set(cellCoords, []);
+                        possibleDigits[cellCoords] = [];
                     }
                 }
             }
@@ -58,7 +58,7 @@ public partial class SudokuService
                 for (var col = 0; col < BoardSize; col++)
                 {
                     var coords = new Coords(row, col);
-                    switch (possibleDigits.Get(coords).Count)
+                    switch (possibleDigits[coords].Count)
                     {
                         // If cell has no possible digits, it means that it is already filled.
                         case <= 0:
@@ -69,7 +69,7 @@ public partial class SudokuService
                             // reflect this change.
                             // This method returns false, if it finds that the board is unsolvable
                             modifiedCells.Add(coords);
-                            if (!AutoFill(cells, coords, possibleDigits.Get(coords).First(), possibleDigits))
+                            if (!AutoFill(board, coords, possibleDigits[coords].First(), possibleDigits))
                                 return NoSolution();
 
                             repeat = true;
@@ -92,7 +92,7 @@ public partial class SudokuService
                             // Cell is filled in the same manner as in the first case, and possibleDigits array is
                             // updated to reflect this change.
                             modifiedCells.Add(coords);
-                            if (!AutoFill(cells, coords, digit.Value, possibleDigits))
+                            if (!AutoFill(board, coords, digit.Value, possibleDigits))
                                 return NoSolution();
 
                             repeat = true;
@@ -113,7 +113,7 @@ public partial class SudokuService
             for (var col = 0; col < BoardSize; col++)
             {
                 var coords = new Coords(row, col);
-                var count = possibleDigits.Get(coords).Count;
+                var count = possibleDigits[coords].Count;
                 // At this point, only filled spaces should have 0 possible digits.
                 if (count == 0 || count >= lowestPossibleDigits)
                     continue;
@@ -125,7 +125,7 @@ public partial class SudokuService
         
         // If all cells have 0 possible digits, the board is solved.
         if (!lowestPossibleCoords.HasValue)
-            return cells;
+            return board;
         
         // At this point, algorithm needs to "guess" the digits and backtrack, if the guessed digit was incorrect.
         // Each possible digit is attempted to be filled in the previously found cell.
@@ -133,26 +133,18 @@ public partial class SudokuService
         {
             // To avoid the first step of the algorithm, the possibleDigits array is deep copied, so that it can be
             // used in the next iteration.
-            var copiedPossibleDigits = new HashSet<SudokuDigit>[BoardSize, BoardSize];
-            
-            for (var row = 0; row < BoardSize; row++)
-            {
-                for (var col = 0; col < BoardSize; col++)
-                {
-                    var coords = new Coords(row, col);
-                    copiedPossibleDigits.Set(coords, new HashSet<SudokuDigit>(possibleDigits.Get(coords)));
-                }
-            }
+            var copiedPossibleDigits = new SudokuBoard<HashSet<SudokuDigit>>((row, col) =>
+                [..possibleDigits[row, col]]);
             
             // Guess is made, and the digit is filled.
             // Copied possibleDigits array is given here instead of the original one, because the original array
             // is no longer needed, and the copy, which will be used by the next recursive call, needs to be updated
             // to reflect the guessed fill.
-            if (!AutoFill(cells, lowestPossibleCoords.Value, digit, copiedPossibleDigits))
+            if (!AutoFill(board, lowestPossibleCoords.Value, digit, copiedPossibleDigits))
                 continue;
             
             // Recursive call is made, with possibleDigitsCopy provided to avoid first step of the algorithm.
-            var result =  SolveRecursive(cells, copiedPossibleDigits);
+            var result =  SolveRecursive(board, copiedPossibleDigits);
             
             // If null is returned, the attempted digit was not correct, and the next digit is attempted
             // Otherwise, the attempted digit was the correct one, and the solved board is returned
@@ -163,15 +155,15 @@ public partial class SudokuService
         // If no possible digit solves the board, the board is unsolvable.
         // Since the backtracking operation did not update modifiedCells for performance reasons, the cell
         // is manually reverted to its original, empty state.
-        cells.Set(lowestPossibleCoords.Value, SudokuDigit.Empty);
+        board[lowestPossibleCoords.Value] = SudokuDigit.Empty;
         return NoSolution();
         
         // This local function is called everytime the board is unsolvable.
         // It returns null, and reverts the modified cells to their original, empty state.
-        SudokuDigit[,]? NoSolution()
+        SudokuBoard<SudokuDigit>? NoSolution()
         {
             foreach (var coords in modifiedCells)
-                cells.Set(coords, SudokuDigit.Empty);
+                board[coords] = SudokuDigit.Empty;
 
             return null;
         }

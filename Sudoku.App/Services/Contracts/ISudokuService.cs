@@ -12,7 +12,7 @@ public interface ISudokuService
     /// </summary>
     /// <param name="cells">Board to solve. Method assumes the board is 9x9</param>
     /// <returns>Solved board, or null if it's unsolvable</returns>
-    SudokuCell[,]? Solve(SudokuCell[,] cells);
+    SudokuBoard<SudokuCell>? Solve(SudokuBoard<SudokuCell> cells);
     
     /// <summary>
     /// Combination of CheckBoardValidity and Solve sudoku.
@@ -21,26 +21,26 @@ public interface ISudokuService
     /// </summary>
     /// <param name="cells">9x9 board to solve.</param>
     /// <returns>Solved board, or null if it's either unsolvable, or original board contained errors</returns>
-    SudokuCell[,]? ValidateAndSolve(SudokuCell[,] cells);
+    SudokuBoard<SudokuCell>? ValidateAndSolve(SudokuBoard<SudokuCell> cells);
 
     /// <summary>
     /// Generates completely random sudoku board, with only 1 possible solution.
     /// </summary>
     /// <returns>9x9 sudoku board</returns>
-    SudokuDigit[,] GenerateBoard();
+    SudokuBoard<SudokuDigit> GenerateBoard();
 
     /// <summary>
     /// Checks if current sudoku board contains any errors.
     /// </summary>
     /// <param name="cells">9x9 sudoku board</param>
     /// <returns>True if board is valid, false otherwise</returns>
-    bool CheckBoardValidity(SudokuDigit[,] cells);
+    bool CheckBoardValidity(SudokuBoard<SudokuDigit> cells);
 
     /// <summary>
     /// Check if the board has no solution, 1 solution, or more than 1 solution.
     /// </summary>
     /// <param name="originalCells"></param>
     /// <returns></returns>
-    Solutions SolutionCount(SudokuDigit[,] originalCells);
+    Solutions SolutionCount(SudokuBoard<SudokuDigit> originalCells);
 
 }

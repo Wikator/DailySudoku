@@ -26,7 +26,7 @@
 
 
 @code {
-    [Parameter] public SudokuCell[,]? Board { get; set; }
+    [Parameter] public SudokuBoard<SudokuCell>? Board { get; set; }
     [Parameter] public EventCallback<(int, int)> OnCellValueChanged { get; set; }
     private readonly ElementReference[,] _cellRefs = new ElementReference[9, 9];
 
@@ -37,18 +37,12 @@
         if (Board is not null)
             return;
         
-        Board = new SudokuCell[9, 9];
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        Board = new SudokuBoard<SudokuCell>(
+            new SudokuCell
             {
-                Board[i, j] = new SudokuCell
-                {
-                    Value = 0,
-                    IsFixed = false
-                };
-            }
-        }
+                Value = 0,
+                IsFixed = false
+            });
     }
 
     private void HandleKeyDown(KeyboardEventArgs e, int row, int col)

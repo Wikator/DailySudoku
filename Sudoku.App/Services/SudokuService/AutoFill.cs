@@ -16,12 +16,12 @@ public partial class SudokuService
     /// <param name="possibleDigits">Algorithm's 2D array that stores which
     /// digits are legal for corresponding cells</param>
     /// <returns>False if board is found to be unsolvable</returns>
-    private static bool AutoFill(SudokuDigit[,] cells, Coords coords, SudokuDigit digit,
-        HashSet<SudokuDigit>[,] possibleDigits)
+    private static bool AutoFill(SudokuBoard<SudokuDigit> cells, Coords coords, SudokuDigit digit,
+        SudokuBoard<HashSet<SudokuDigit>> possibleDigits)
     {
         // Cell is filled with the digit, and its possible digits are set to none.
-        cells.Set(coords, digit);
-        possibleDigits.Set(coords, []);
+        cells[coords] = digit;
+        possibleDigits[coords].Clear();
         
         // The filled digit is removed from the possible digits of the cells in the same row, column, and block.
         // If that drops cell's possible digits to 0, the board is unsolvable and false is returned.
@@ -37,8 +37,8 @@ public partial class SudokuService
 
             var blockCoords = Coords.BlockCoords(coords, offset);
 
-            if (possibleDigits.Get(blockCoords).Remove(digit)
-                && possibleDigits.Get(blockCoords).Count == 0)
+            if (possibleDigits[blockCoords].Remove(digit)
+                && possibleDigits[blockCoords].Count == 0)
                 return false;
             
         }

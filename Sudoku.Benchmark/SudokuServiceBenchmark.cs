@@ -12,7 +12,6 @@ public class SudokuServiceBenchmark
     [Benchmark]
     public void Benchmark1()
     {
-        var digits = new SudokuCell[9, 9];
         var tmp = new[,]
         {
             { 5, 0, 6, 9, 1, 8, 0, 2, 3 },
@@ -26,17 +25,12 @@ public class SudokuServiceBenchmark
             { 0, 7, 0, 0, 0, 0, 0, 0, 6 }
         };
         
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        var digits = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                digits[i, j] = new SudokuCell
-                {
-                    Value = (SudokuDigit)tmp[i, j],
-                    IsFixed = tmp[i, j] != 0
-                };
-            }
-        }
+                Value = (SudokuDigit)tmp[row, col],
+                IsFixed = tmp[row, col] != 0
+            });
         
         _sudokuService.Solve(digits);
     }
@@ -44,7 +38,6 @@ public class SudokuServiceBenchmark
     [Benchmark]
     public void Benchmark2()
     {
-        var digits = new SudokuCell[9, 9];
         var tmp = new[,]
         {
             { 0, 0, 0, 0, 0, 5, 2, 0, 0 },
@@ -58,17 +51,12 @@ public class SudokuServiceBenchmark
             { 0, 0, 0, 0, 0, 0, 1, 0, 0 }
         };
         
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        var digits = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                digits[i, j] = new SudokuCell
-                {
-                    Value = (SudokuDigit)tmp[i, j],
-                    IsFixed = tmp[i, j] != 0
-                };
-            }
-        }
+                Value = (SudokuDigit)tmp[row, col],
+                IsFixed = tmp[row, col] != 0
+            });
         
         _sudokuService.Solve(digits);
     }
@@ -76,7 +64,6 @@ public class SudokuServiceBenchmark
     [Benchmark]
     public void Benchmark3()
     {
-        var digits = new SudokuCell[9, 9];
         var tmp = new[,]
         {
             { 0, 0, 0, 0, 0, 0, 0, 0, 3 },
@@ -90,17 +77,12 @@ public class SudokuServiceBenchmark
             { 0, 5, 0, 0, 7, 3, 0, 0, 0 }
         };
         
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        var digits = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                digits[i, j] = new SudokuCell
-                {
-                    Value = (SudokuDigit)tmp[i, j],
-                    IsFixed = tmp[i, j] != 0
-                };
-            }
-        }
+                Value = (SudokuDigit)tmp[row, col],
+                IsFixed = tmp[row, col] != 0
+            });
         
         _sudokuService.Solve(digits);
     }
@@ -108,7 +90,6 @@ public class SudokuServiceBenchmark
     [Benchmark]
     public void Benchmark4()
     {
-        var digits = new SudokuCell[9, 9];
         var tmp = new[,]
         {
             { 0, 0, 6, 0, 0, 0, 9, 0, 0 },
@@ -122,17 +103,12 @@ public class SudokuServiceBenchmark
             { 7, 0, 0, 0, 0, 6, 0, 0, 0 }
         };
         
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        var digits = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                digits[i, j] = new SudokuCell
-                {
-                    Value = (SudokuDigit)tmp[i, j],
-                    IsFixed = tmp[i, j] != 0
-                };
-            }
-        }
+                Value = (SudokuDigit)tmp[row, col],
+                IsFixed = tmp[row, col] != 0
+            });
         
         _sudokuService.Solve(digits);
     }
@@ -140,7 +116,6 @@ public class SudokuServiceBenchmark
     [Benchmark]
     public void Benchmark5()
     {
-        var digits = new SudokuCell[9, 9];
         var tmp = new[,]
         {
             { 0, 1, 0, 0, 0, 6, 4, 0, 0 },
@@ -154,17 +129,12 @@ public class SudokuServiceBenchmark
             { 0, 0, 1, 0, 0, 0, 0, 7, 0 }
         };
         
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        var digits = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                digits[i, j] = new SudokuCell
-                {
-                    Value = (SudokuDigit)tmp[i, j],
-                    IsFixed = tmp[i, j] != 0
-                };
-            }
-        }
+                Value = (SudokuDigit)tmp[row, col],
+                IsFixed = tmp[row, col] != 0
+            });
         
         _sudokuService.Solve(digits);
     }
@@ -172,7 +142,6 @@ public class SudokuServiceBenchmark
     [Benchmark]
     public void Benchmark6()
     {
-        var digits = new SudokuCell[9, 9];
         var tmp = new[,]
         {
             { 0, 0, 5, 3, 0, 0, 0, 0, 0 },
@@ -186,17 +155,12 @@ public class SudokuServiceBenchmark
             { 0, 0, 0, 0, 0, 9, 7, 0, 0 }
         };
         
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        var digits = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                digits[i, j] = new SudokuCell
-                {
-                    Value = (SudokuDigit)tmp[i, j],
-                    IsFixed = tmp[i, j] != 0
-                };
-            }
-        }
+                Value = (SudokuDigit)tmp[row, col],
+                IsFixed = tmp[row, col] != 0
+            });
         
         _sudokuService.Solve(digits);
     }

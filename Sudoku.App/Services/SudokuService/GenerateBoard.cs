@@ -1,31 +1,29 @@
 using Sudoku.App.Enums;
-using Sudoku.App.Extensions;
 using Sudoku.App.Helpers;
 
 namespace Sudoku.App.Services.SudokuService;
 
 public partial class SudokuService
 {
-    public SudokuDigit[,] GenerateBoard()
+    public SudokuBoard<SudokuDigit> GenerateBoard()
     {
-        var board = new SudokuDigit[BoardSize, BoardSize];
-        board.Fill(SudokuDigit.Empty);
+        var board = new SudokuBoard<SudokuDigit>(SudokuDigit.Empty);
 
         while (!IsFull(board))
         {
             var random = new Random();
             var coords = new Coords(random.Next(0, BoardSize), random.Next(0, BoardSize));
             
-            if (board.Get(coords) != SudokuDigit.Empty)
+            if (board[coords] != SudokuDigit.Empty)
                 continue;
             
-            board.Set(coords, (SudokuDigit)random.Next(1, 10));
+            board[coords] = (SudokuDigit)random.Next(1, 10);
             
             var result = ValidateAndSolve(board);
 
             if (result is null)
             {   
-                board.Set(coords, SudokuDigit.Empty);
+                board[coords] = SudokuDigit.Empty;
             }
         }
         
@@ -39,16 +37,17 @@ public partial class SudokuService
 
         foreach (var coords in positions)
         {
-            board.Set(coords, SudokuDigit.Empty);
+            var item = board[coords];
+            board[coords] = SudokuDigit.Empty;
             
             if (SolutionCount(board) != Solutions.OneSolution)
-                board.Set(coords, board.Get(coords));
+                board[coords] = item;
         }
 
         return board;
     }
     
-    private static bool IsFull(SudokuDigit[,] cells)
+    private static bool IsFull(SudokuBoard<SudokuDigit> cells)
     {
         for (var i = 0; i < BoardSize; i++)
         {

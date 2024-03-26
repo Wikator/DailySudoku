@@ -46,7 +46,7 @@
     private Task<AuthenticationState>? AuthState { get; set; }
     private Solutions _solutions = Solutions.MultipleSolutions;
     
-    private SudokuCell[,] Board { get; } = new SudokuCell[9, 9];
+    private SudokuBoard<SudokuCell> Board { get; } = new();
 
     protected override void OnInitialized()
     {
@@ -67,7 +67,7 @@
 
     private void HowManySolutions((int, int) coords)
     {
-        _solutions = SudokuService.SolutionCount(Board.ToDigits());
+        _solutions = SudokuService.SolutionCount(new SudokuBoard<SudokuDigit>(Board.Board.ToDigits()));
     }
 
     private async Task Save()
@@ -79,7 +79,7 @@
         var user = authState.User;
         var id = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
-        await SudokuRepository.CreateSudokuAsync(Board.ToDigits(), _solutions, id);
+        await SudokuRepository.CreateSudokuAsync(Board.Board.ToDigits(), _solutions, id);
     }
 
 }

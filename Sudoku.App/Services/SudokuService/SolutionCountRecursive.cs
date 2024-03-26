@@ -1,5 +1,4 @@
 using Sudoku.App.Enums;
-using Sudoku.App.Extensions;
 using Sudoku.App.Helpers;
 
 namespace Sudoku.App.Services.SudokuService;
@@ -9,32 +8,33 @@ public partial class SudokuService
     // This algorithm works exactly the same as Solve, except it doesn't fill the board, and it returns
     // the number of solutions
     // Original board is not modified.
-    private static Solutions SolutionCountRecursive(SudokuDigit[,] cells, HashSet<SudokuDigit>[,]? possibleDigits = null)
+    private static Solutions SolutionCountRecursive(SudokuBoard<SudokuDigit> board,
+        SudokuBoard<HashSet<SudokuDigit>>? possibleDigits = null)
     {
         var modifiedCells = new HashSet<Coords>();
-
+        
         if (possibleDigits is null)
         {
-            possibleDigits = new HashSet<SudokuDigit>[BoardSize, BoardSize];
+            possibleDigits = new SudokuBoard<HashSet<SudokuDigit>>();
             for (var row = 0; row < BoardSize; row++)
             {
                 for (var col = 0; col < BoardSize; col++)
                 {
                     var cellCoords = new Coords(row, col);
-                    if (cells.Get(cellCoords) == SudokuDigit.Empty)
+                    if (board[cellCoords]== SudokuDigit.Empty)
                     {
-                        possibleDigits.Set(cellCoords, AllDigits());
-                        if (!GetPossibleDigits(cells, cellCoords, possibleDigits.Get(cellCoords)))
+                        possibleDigits[cellCoords] = AllDigits();
+                        if (!GetPossibleDigits(board, cellCoords, possibleDigits[cellCoords]))
                             return NoSolution();
                     }
                     else
                     {
-                        possibleDigits.Set(cellCoords, []);
+                        possibleDigits[cellCoords] = [];
                     }
                 }
             }
         }
-        
+
         var repeat = true;
         while (repeat)
         {
@@ -44,14 +44,14 @@ public partial class SudokuService
                 for (var col = 0; col < BoardSize; col++)
                 {
                     var coords = new Coords(row, col);
-                    switch (possibleDigits.Get(coords).Count)
+                    switch (possibleDigits[coords].Count)
                     {
                         case <= 0:
                             continue;
                         case 1:
                         {
                             modifiedCells.Add(coords);
-                            if (!AutoFill(cells, coords, possibleDigits.Get(coords).First(), possibleDigits))
+                            if (!AutoFill(board, coords, possibleDigits[coords].First(), possibleDigits))
                                 return NoSolution();
 
                             repeat = true;
@@ -61,12 +61,12 @@ public partial class SudokuService
                         {
                             if (!GetUniquePossibleDigit(coords, possibleDigits, out var digit))
                                 return NoSolution();
-                            
+
                             if (digit is null)
                                 break;
-                            
+
                             modifiedCells.Add(coords);
-                            if (!AutoFill(cells, coords, digit.Value, possibleDigits))
+                            if (!AutoFill(board, coords, digit.Value, possibleDigits))
                                 return NoSolution();
 
                             repeat = true;
@@ -76,7 +76,7 @@ public partial class SudokuService
                 }
             }
         }
-        
+
         var lowestPossibleDigits = BoardSize;
         Coords? lowestPossibleCoords = null;
         for (var row = 0; row < BoardSize; row++)
@@ -84,7 +84,7 @@ public partial class SudokuService
             for (var col = 0; col < BoardSize; col++)
             {
                 var coords = new Coords(row, col);
-                var count = possibleDigits.Get(coords).Count;
+                var count = possibleDigits[coords].Count;
                 
                 if (count == 0 || count >= lowestPossibleDigits)
                     continue;
@@ -100,21 +100,13 @@ public partial class SudokuService
         var alreadyFound = false;
         foreach (var digit in possibleDigits[lowestPossibleCoords.Value.Row, lowestPossibleCoords.Value.Column])
         {
-            var copiedPossibleDigits = new HashSet<SudokuDigit>[BoardSize, BoardSize];
+            var copiedPossibleDigits = new SudokuBoard<HashSet<SudokuDigit>>((row, col) =>
+                [..possibleDigits[row, col]]);
             
-            for (var row = 0; row < BoardSize; row++)
-            {
-                for (var col = 0; col < BoardSize; col++)
-                {
-                    var coords = new Coords(row, col);
-                    copiedPossibleDigits.Set(coords, new HashSet<SudokuDigit>(possibleDigits.Get(coords)));
-                }
-            }
-            
-            if (!AutoFill(cells, lowestPossibleCoords.Value, digit, copiedPossibleDigits))
+            if (!AutoFill(board, lowestPossibleCoords.Value, digit, copiedPossibleDigits))
                 continue;
             
-            var result =  SolutionCountRecursive(cells, copiedPossibleDigits);
+            var result =  SolutionCountRecursive(board, copiedPossibleDigits);
             
             switch (result)
             {
@@ -135,13 +127,13 @@ public partial class SudokuService
             }
         }
         
-        cells.Set(lowestPossibleCoords.Value, SudokuDigit.Empty);
+        board[lowestPossibleCoords.Value] = SudokuDigit.Empty;
         return alreadyFound ? OneSolution() : NoSolution();
 
         Solutions NoSolution()
         {
             foreach (var coords in modifiedCells)
-                cells.Set(coords, SudokuDigit.Empty);
+                board[coords] = SudokuDigit.Empty;
                         
             return Solutions.NoSolution; 
         }
@@ -149,7 +141,7 @@ public partial class SudokuService
         Solutions OneSolution()
         {
             foreach (var coords in modifiedCells)
-                cells.Set(coords, SudokuDigit.Empty);
+                board[coords] = SudokuDigit.Empty;
                         
             return Solutions.OneSolution; 
         }
@@ -157,7 +149,7 @@ public partial class SudokuService
         Solutions MultipleSolutions()
         {
             foreach (var coords in modifiedCells)
-                cells.Set(coords, SudokuDigit.Empty);
+                board[coords] = SudokuDigit.Empty;
                         
             return Solutions.MultipleSolutions; 
         }

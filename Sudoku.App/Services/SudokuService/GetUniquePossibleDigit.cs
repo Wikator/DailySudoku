@@ -1,5 +1,4 @@
 using Sudoku.App.Enums;
-using Sudoku.App.Extensions;
 using Sudoku.App.Helpers;
 
 namespace Sudoku.App.Services.SudokuService;
@@ -14,24 +13,44 @@ public partial class SudokuService
     /// digits are legal for corresponding cells</param>
     /// <param name="uniqueDigit">Out parameter that returns found digit, or null</param>
     /// <returns>False if the board is found to be unsolvable, true otherwise</returns>
-    private static bool GetUniquePossibleDigit(Coords coords, HashSet<SudokuDigit>[,] possibleDigits,
+    private static bool GetUniquePossibleDigit(Coords coords, SudokuBoard<HashSet<SudokuDigit>> possibleDigits,
         out SudokuDigit? uniqueDigit)
     {
         // First, it checks which digits from its possible digits do not appear in any other cell of its row, column,
         // and 3x3 block.
-        var rowRemainingDigits = GetRemainingDigits(coords, possibleDigits, (r, _, o) => new Coords(r, o));
-        var colRemainingDigits = GetRemainingDigits(coords, possibleDigits, (_, c, o) => new Coords(o, c));
-        var blockRemainingDigits = GetRemainingDigits(coords, possibleDigits, Coords.BlockCoords);
+        var digitSets = new HashSet<SudokuDigit>[3];
+        digitSets[0] = GetRemainingDigits(coords, possibleDigits, (r, _, o) => new Coords(r, o));
+        digitSets[1] = GetRemainingDigits(coords, possibleDigits, (_, c, o) => new Coords(o, c));
+        digitSets[2] = GetRemainingDigits(coords, possibleDigits, Coords.BlockCoords);
         
-        // Now that it has the remaining digits, some safety checks must be made.
-        return GetUniqueDigit(out uniqueDigit, rowRemainingDigits, colRemainingDigits, blockRemainingDigits);
+        // An answer is only valid if either all sets have more than one digit, in which case
+        // there is no unique digit, or when all sets with exactly one digit have the same digit.
+        // Otherwise, if there are multiple sets with 1 digit, and they are not the same, the board is unsolvable,
+        // because of the rule that each row, column, and block must contain all 9 different digits.
+        foreach (var digits in digitSets)
+        {
+            if (digits.Count != 1)
+                continue;
+            
+            var candidate = digits.First();
+            if (digitSets.All(set => set.Count != 1 || set.First() == candidate))
+            {
+                uniqueDigit = candidate;
+                return true;
+            }
+            uniqueDigit = null;
+            return false;
+        }
+
+        uniqueDigit = null;
+        return true;
     }
 
-    private static HashSet<SudokuDigit> GetRemainingDigits(Coords coords, HashSet<SudokuDigit>[,] possibleDigits,
-        Func<int, int, int, Coords> getCoords)
+    private static HashSet<SudokuDigit> GetRemainingDigits(Coords coords,
+        SudokuBoard<HashSet<SudokuDigit>> possibleDigits, Func<int, int, int, Coords> getCoords)
     {
         // It starts with a copy of its possible digits, and removes digits that appear in other cells.
-        var remainingDigits = new HashSet<SudokuDigit>(possibleDigits.Get(coords));
+        var remainingDigits = new HashSet<SudokuDigit>(possibleDigits[coords]);
         for (var offset = 0; offset < BoardSize; offset++)
         {
             // getCords is a function that turns the offsets into the indexes of the needed cells.
@@ -45,30 +64,5 @@ public partial class SudokuService
             }
         }
         return remainingDigits;
-    }
-
-    private static bool GetUniqueDigit(out SudokuDigit? digit, params HashSet<SudokuDigit>[] digitSets)
-    {
-        // An answer is only valid if either all sets have more than one digit, in which case
-        // there is no unique digit, or when all sets with exactly one digit have the same digit.
-        // Otherwise, if there are multiple sets with 1 digit, and they are not the same, the board is unsolvable,
-        // because of the rule that each row, column, and block must contain all 9 different digits.
-        foreach (var digits in digitSets)
-        {
-            if (digits.Count != 1)
-                continue;
-            
-            var uniqueDigit = digits.First();
-            if (digitSets.All(set => set.Count != 1 || set.First() == uniqueDigit))
-            {
-                digit = uniqueDigit;
-                return true;
-            }
-            digit = null;
-            return false;
-        }
-
-        digit = null;
-        return true;
     }
 }

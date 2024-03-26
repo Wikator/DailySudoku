@@ -8,20 +8,20 @@ public partial class SudokuService : ISudokuService
 {
     private const int BoardSize = 9;
 
-    private static SudokuDigit[,]? Solve(SudokuDigit[,] originalCells)
+    private static SudokuBoard<SudokuDigit>? Solve(SudokuBoard<SudokuDigit> originalCells)
     {
         var cells = DeepCopy(originalCells);
         return SolveRecursive(cells);
     }
 
-    private SudokuDigit[,]? ValidateAndSolve(SudokuDigit[,] cells)
+    private SudokuBoard<SudokuDigit>? ValidateAndSolve(SudokuBoard<SudokuDigit> cells)
     {
         return !CheckBoardValidity(cells) ? null : Solve(cells);
     }
 
-    public SudokuCell[,]? Solve(SudokuCell[,] cells)
+    public SudokuBoard<SudokuCell>? Solve(SudokuBoard<SudokuCell> cells)
     {
-        var sudokuDigits = new SudokuDigit[BoardSize, BoardSize];
+        var sudokuDigits = new SudokuBoard<SudokuDigit>();
         for (var i = 0; i < BoardSize; i++)
         {
             for (var j = 0; j < BoardSize; j++)
@@ -34,7 +34,7 @@ public partial class SudokuService : ISudokuService
         if (result is null)
             return null;
 
-        var solvedCells = new SudokuCell[BoardSize, BoardSize];
+        var solvedCells = new SudokuBoard<SudokuCell>();
         for (var i = 0; i < BoardSize; i++)
         {
             for (var j = 0; j < BoardSize; j++)
@@ -50,9 +50,9 @@ public partial class SudokuService : ISudokuService
         return solvedCells;
     }
 
-    public SudokuCell[,]? ValidateAndSolve(SudokuCell[,] cells)
+    public SudokuBoard<SudokuCell>? ValidateAndSolve(SudokuBoard<SudokuCell> cells)
     {
-        var sudokuDigits = new SudokuDigit[BoardSize, BoardSize];
+        var sudokuDigits = new SudokuBoard<SudokuDigit>();
         for (var i = 0; i < BoardSize; i++)
         {
             for (var j = 0; j < BoardSize; j++)
@@ -68,7 +68,7 @@ public partial class SudokuService : ISudokuService
         if (result is null)
             return null;
 
-        var solvedCells = new SudokuCell[BoardSize, BoardSize];
+        var solvedCells = new SudokuBoard<SudokuCell>();
         for (var i = 0; i < BoardSize; i++)
         {
             for (var j = 0; j < BoardSize; j++)
@@ -84,7 +84,7 @@ public partial class SudokuService : ISudokuService
         return solvedCells;
     }
     
-    public Solutions SolutionCount(SudokuDigit[,] originalCells)
+    public Solutions SolutionCount(SudokuBoard<SudokuDigit> originalCells)
     {
         if (!CheckBoardValidity(originalCells))
             return Solutions.NoSolution;
@@ -103,9 +103,9 @@ public partial class SudokuService : ISudokuService
         }
     }
     
-    private static SudokuDigit[,] DeepCopy(SudokuDigit[,] original)
+    private static SudokuBoard<SudokuDigit> DeepCopy(SudokuBoard<SudokuDigit> original)
     {
-        var copy = new SudokuDigit[BoardSize, BoardSize];
+        var copy = new SudokuBoard<SudokuDigit>();
 
         for (var i = 0; i < BoardSize; i++)
         {

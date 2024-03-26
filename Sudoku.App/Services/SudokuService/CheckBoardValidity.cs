@@ -6,7 +6,7 @@ namespace Sudoku.App.Services.SudokuService;
 public partial class SudokuService
 {
     // Board is checked for validity, meaning that no digit is duplicated in any row, column, or 3x3 block
-    public bool CheckBoardValidity(SudokuDigit[,] cells)
+    public bool CheckBoardValidity(SudokuBoard<SudokuDigit> cells)
     {
         for (var row = 0; row < BoardSize; row++)
         {
