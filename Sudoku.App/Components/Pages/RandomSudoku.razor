@@ -1,0 +1,45 @@
+﻿@page "/RandomSudoku"
+@using Sudoku.App.Helpers
+@using Sudoku.App.Enums
+@inject ISudokuService SudokuService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<h3>RandomSudoku</h3>
+
+<div class="container">
+    @if (_boardSolved)
+    {
+        <div class="alert alert-success">Board solved!</div>
+    }
+    
+    <SudokuBoard Board="Board" OnCellValueChanged="HandleBoardChange" />
+</div>
+
+@code {
+    SudokuBoard<SudokuCell> Board { get; } = new();
+    bool _boardSolved;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        var generatedBoard = SudokuService.GenerateBoard();
+
+        for (var i = 0; i < 9; i++)
+        {
+            for (var j = 0; j < 9; j++)
+            {
+                Board[i, j] = new SudokuCell
+                {
+                    Value = generatedBoard[i, j],
+                    IsFixed = generatedBoard[i, j] != SudokuDigit.Empty
+                };
+            }
+        }
+    }
+
+    private void HandleBoardChange((int, int) coords)
+    {
+        _boardSolved = SudokuService.IsSolved(Board);
+    }
+}

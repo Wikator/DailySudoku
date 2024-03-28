@@ -1,18 +1,18 @@
 ```
 
-BenchmarkDotNet v0.13.12, Linux Mint 21.3 (Virginia)
-Intel Core i7-3770 CPU 3.40GHz (Ivy Bridge), 1 CPU, 8 logical and 4 physical cores
-.NET SDK 8.0.200
-  [Host]     : .NET 8.0.2 (8.0.224.6711), X64 RyuJIT AVX
-  DefaultJob : .NET 8.0.2 (8.0.224.6711), X64 RyuJIT AVX
+BenchmarkDotNet v0.13.12, Windows 11 (10.0.22631.3296/23H2/2023Update/SunValley3)
+Intel Core i7-9700K CPU 3.60GHz (Coffee Lake), 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
 ```
-| Method     | Mean       | Error    | StdDev   |
-|----------- |-----------:|---------:|---------:|
-| Benchmark1 |   107.6 μs |  2.15 μs |  3.87 μs |
-| Benchmark2 |   177.1 μs |  3.47 μs |  4.52 μs |
-| Benchmark3 |   611.0 μs |  4.65 μs |  4.35 μs |
-| Benchmark4 | 1,849.1 μs | 35.88 μs | 39.88 μs |
-| Benchmark5 |   995.0 μs | 19.22 μs | 26.31 μs |
-| Benchmark6 | 3,442.3 μs | 58.48 μs | 51.84 μs |
+| Method     | Mean        | Error     | StdDev    |
+|----------- |------------:|----------:|----------:|
+| Benchmark1 |    69.40 μs |  1.305 μs |  1.220 μs |
+| Benchmark2 |   121.72 μs |  0.946 μs |  0.885 μs |
+| Benchmark3 |   417.08 μs |  2.746 μs |  2.569 μs |
+| Benchmark4 | 1,147.99 μs | 16.118 μs | 15.076 μs |
+| Benchmark5 |   618.08 μs |  7.032 μs |  6.578 μs |
+| Benchmark6 | 2,057.21 μs | 16.829 μs | 15.741 μs |
