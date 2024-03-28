@@ -28,6 +28,13 @@ public interface ISudokuService
     /// </summary>
     /// <returns>9x9 sudoku board</returns>
     SudokuBoard<SudokuDigit> GenerateBoard();
+    
+    /// <summary>
+    /// Checks if boards is valid, and full.
+    /// </summary>
+    /// <param name="cells">9x9 sudoku boards</param>
+    /// <returns>True if board is solved, false otherwise</returns>
+    bool IsSolved(SudokuBoard<SudokuCell> cells);
 
     /// <summary>
     /// Checks if current sudoku board contains any errors.
