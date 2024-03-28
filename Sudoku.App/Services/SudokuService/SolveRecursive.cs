@@ -10,7 +10,7 @@ public partial class SudokuService
     {
         // Initialize hashset that stores which digits were modified in the current recursive call, so that they can be
         // reverted if backtracking is needed.
-        var modifiedCells = new HashSet<Coords>();
+        var modifiedCells = new SudokuBoard<bool>(false);
 
         // Each hashset in possibleDigits 2D array represents the possible digits for the corresponding cell.
         // If no existing hashset was given, one is initialized and calculated here.
@@ -68,7 +68,7 @@ public partial class SudokuService
                             // Cell is filled with the only possible digit, and possibleDigits array is updated to
                             // reflect this change.
                             // This method returns false, if it finds that the board is unsolvable
-                            modifiedCells.Add(coords);
+                            modifiedCells[coords] = true;
                             if (!AutoFill(board, coords, possibleDigits[coords].First(), possibleDigits))
                                 return NoSolution();
 
@@ -91,7 +91,7 @@ public partial class SudokuService
 
                             // Cell is filled in the same manner as in the first case, and possibleDigits array is
                             // updated to reflect this change.
-                            modifiedCells.Add(coords);
+                            modifiedCells[coords] = true;
                             if (!AutoFill(board, coords, digit.Value, possibleDigits))
                                 return NoSolution();
 
@@ -162,8 +162,17 @@ public partial class SudokuService
         // It returns null, and reverts the modified cells to their original, empty state.
         SudokuBoard<SudokuDigit>? NoSolution()
         {
-            foreach (var coords in modifiedCells)
-                board[coords] = SudokuDigit.Empty;
+            for (var row = 0; row < BoardSize; row++)
+            {
+                for (var col = 0; col < BoardSize; col++)
+                {
+                    var coords = new Coords(row, col);
+                    if (!modifiedCells[coords])
+                        continue;
+                    
+                    board[coords] = SudokuDigit.Empty;
+                }
+            }
 
             return null;
         }

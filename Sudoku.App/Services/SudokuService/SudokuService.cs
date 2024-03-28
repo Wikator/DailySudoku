@@ -21,45 +21,25 @@ public partial class SudokuService : ISudokuService
 
     public SudokuBoard<SudokuCell>? Solve(SudokuBoard<SudokuCell> cells)
     {
-        var sudokuDigits = new SudokuBoard<SudokuDigit>();
-        for (var i = 0; i < BoardSize; i++)
-        {
-            for (var j = 0; j < BoardSize; j++)
-            {
-                sudokuDigits[i, j] = cells[i, j].Value;
-            }
-        }
+        var sudokuDigits = new SudokuBoard<SudokuDigit>((row, col) => cells[row, col].Value);
 
         var result = Solve(sudokuDigits);
         if (result is null)
             return null;
 
-        var solvedCells = new SudokuBoard<SudokuCell>();
-        for (var i = 0; i < BoardSize; i++)
-        {
-            for (var j = 0; j < BoardSize; j++)
+        var solvedCells = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                solvedCells[i, j] = new SudokuCell
-                {
-                    Value = result[i, j],
-                    IsFixed = cells[i, j].IsFixed
-                };
-            }
-        }
+                Value = result[row, col],
+                IsFixed = cells[row, col].IsFixed
+            });
 
         return solvedCells;
     }
 
     public SudokuBoard<SudokuCell>? ValidateAndSolve(SudokuBoard<SudokuCell> cells)
     {
-        var sudokuDigits = new SudokuBoard<SudokuDigit>();
-        for (var i = 0; i < BoardSize; i++)
-        {
-            for (var j = 0; j < BoardSize; j++)
-            {
-                sudokuDigits[i, j] = cells[i, j].Value;
-            }
-        }
+        var sudokuDigits = new SudokuBoard<SudokuDigit>((row, col) => cells[row, col].Value);
 
         if (!CheckBoardValidity(sudokuDigits))
             return null;
@@ -68,18 +48,12 @@ public partial class SudokuService : ISudokuService
         if (result is null)
             return null;
 
-        var solvedCells = new SudokuBoard<SudokuCell>();
-        for (var i = 0; i < BoardSize; i++)
-        {
-            for (var j = 0; j < BoardSize; j++)
+        var solvedCells = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                solvedCells[i, j] = new SudokuCell
-                {
-                    Value = result[i, j],
-                    IsFixed = cells[i, j].IsFixed
-                };
-            }
-        }
+                Value = result[row, col],
+                IsFixed = cells[row, col].IsFixed
+            });
 
         return solvedCells;
     }
