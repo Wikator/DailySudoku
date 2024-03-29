@@ -1,5 +1,6 @@
 using Sudoku.App.Enums;
 using Sudoku.App.Extensions;
+using Sudoku.App.Helpers;
 using Sudoku.App.Repositories.Contracts;
 using Sudoku.App.Services.Contracts;
 
@@ -27,6 +28,27 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
             board = board.ToBoardString(),
             solutions = (int)solutions,
             userId
+        };
+        
+        await DataAccess.ExecuteWriteAsync(query, parameters);
+    }
+
+    public async Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateTime date)
+    {
+        // language=Cypher
+        const string query = """
+                             CREATE (s:DailySudoku {
+                                id: $id,
+                                date: $date,
+                                board: $board
+                             })<-[:CREATED]-(u)
+                             """;
+
+        var parameters = new
+        {
+            id = Guid.NewGuid().ToString(),
+            board = board.Board.ToBoardString(),
+            date
         };
         
         await DataAccess.ExecuteWriteAsync(query, parameters);

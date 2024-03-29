@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Neo4j.Driver;
 using Sudoku.App.Components;
+using Sudoku.App.HostedServices;
 using Sudoku.App.Repositories;
 using Sudoku.App.Repositories.Contracts;
 using Sudoku.App.Services;
@@ -19,6 +20,8 @@ builder.Services.AddScoped<ISudokuService, SudokuService>();
 builder.Services.AddScoped<INeo4JDataAccess, Neo4JDataAccess>();
 builder.Services.AddScoped<IAppUserRepository, AppUserRepository>();
 builder.Services.AddScoped<ISudokuRepository, SudokuRepository>();
+
+builder.Services.AddHostedService<DailySudokuHostedService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
