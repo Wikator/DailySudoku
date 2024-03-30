@@ -20,8 +20,15 @@ Welcome to your new app.
                 @_error
             </div>
         }
+        
+        @if (_isSolved)
+        {
+            <div class="alert alert-success">
+                Board is solved!
+            </div>
+        }
     
-        <SudokuBoard Board="_board"/>
+        <SudokuBoard Board="_board" OnCellValueChanged="HandleCellChanged" />
         <button @onclick="Solve" class="btn btn-primary">Solve</button>
     </div>
 }
@@ -30,6 +37,7 @@ Welcome to your new app.
     
     SudokuBoard<SudokuCell>? _board;
     string? _error;
+    bool _isSolved;
 
     protected override async Task OnInitializedAsync()
     {
@@ -79,5 +87,13 @@ Welcome to your new app.
         stopwatch.Stop();
         var microseconds = stopwatch.ElapsedTicks / (System.Diagnostics.Stopwatch.Frequency / (1000L*1000L));
         Console.WriteLine($"Solving took {microseconds}μs");
+    }
+
+    private void HandleCellChanged((int, int) coords)
+    {
+        if (_board is null)
+            return;
+        
+        _isSolved = SudokuService.IsSolved(_board);
     }
 }

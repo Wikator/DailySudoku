@@ -1,0 +1,54 @@
+@page "/Solve/{id}"
+@using Sudoku.App.Helpers
+@inject NavigationManager NavigationManager
+@inject ISudokuRepository SudokuRepository
+@inject ISudokuService SudokuService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<h3>Solve</h3>
+
+@if (_board is not null)
+{
+    <div class="container">
+        
+        @if (_isSolved)
+        {
+            <div class="alert alert-success">
+                Board is solved!
+            </div>
+        }
+    
+        <SudokuBoard Board="_board" OnCellValueChanged="HandleCellChanged" />
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? id { get; set; }
+
+    private SudokuBoard<SudokuCell>? _board;
+    private bool _isSolved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(id))
+            NavigationManager.NavigateTo("/");
+        else
+        {
+            var board = await SudokuRepository.GetSudoku(id);
+            
+            if (board is null)
+                NavigationManager.NavigateTo("/");
+
+            _board = board;
+        }
+    }
+
+    private void HandleCellChanged((int, int) coords)
+    {
+        if (_board is null)
+            return;
+        
+        _isSolved = SudokuService.IsSolved(_board);
+    }
+}

@@ -2,6 +2,7 @@ using Neo4j.Driver;
 using Sudoku.App.Enums;
 using Sudoku.App.Extensions;
 using Sudoku.App.Helpers;
+using Sudoku.App.Models;
 using Sudoku.App.Repositories.Contracts;
 using Sudoku.App.Services.Contracts;
 
@@ -32,6 +33,62 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         };
         
         await DataAccess.ExecuteWriteAsync(query, parameters);
+    }
+
+    public async Task<List<SudokuWithId>> GetUserSudoku(string userId)
+    {
+        // language=Cypher
+        const string query = """
+                             MATCH (:User { id: $userId })-[:CREATED]->(s:Sudoku)
+                             RETURN s.board AS Board, s.id AS Id
+                             """;
+
+        var parameters = new
+        {
+            userId
+        };
+
+        var records = await DataAccess.ExecuteReadListAsync(query, parameters);
+
+        return records.Select(record =>
+        {
+            var boardString = record["Board"].As<string>();
+            var board = new SudokuBoard<SudokuCell>((row, col) =>
+                new SudokuCell
+                {
+                    Value = (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString()),
+                    IsFixed = true
+                });
+            return new SudokuWithId(Guid.Parse(record["Id"].As<string>()), board);
+        }).ToList();
+    }
+
+    public async Task<SudokuBoard<SudokuCell>?> GetSudoku(string id)
+    {
+        try
+        {
+            // language=Cypher
+            const string query = """
+                                 MATCH (s:Sudoku { id: $id })
+                                 RETURN s.board AS Board
+                                 """;
+
+            var parameters = new { id };
+
+            var record = await DataAccess.ExecuteReadSingleAsync(query, parameters);
+            var boardString = record["Board"].As<string>();
+
+            return new SudokuBoard<SudokuCell>((row, col) =>
+                new SudokuCell
+                {
+                    Value = (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString()),
+                    IsFixed = boardString[row * 9 + col] != '0'
+                });
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     public async Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateTime date)
