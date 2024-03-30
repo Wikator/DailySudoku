@@ -53,12 +53,9 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         return records.Select(record =>
         {
             var boardString = record["Board"].As<string>();
-            var board = new SudokuBoard<SudokuCell>((row, col) =>
-                new SudokuCell
-                {
-                    Value = (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString()),
-                    IsFixed = true
-                });
+            var board = new SudokuBoard<SudokuDigit>((row, col) =>
+                    (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString())
+                );
             return new SudokuWithId(Guid.Parse(record["Id"].As<string>()), board);
         }).ToList();
     }

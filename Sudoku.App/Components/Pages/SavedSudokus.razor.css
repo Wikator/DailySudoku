@@ -1,0 +1,7 @@
+.board {
+    color: black;
+}
+
+.board:hover {
+    border: black 5px;
+}

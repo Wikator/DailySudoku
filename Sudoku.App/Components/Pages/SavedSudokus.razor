@@ -1,12 +1,10 @@
 @page "/SavedSudokus"
 
 @using Microsoft.AspNetCore.Authorization
-@using Sudoku.App.Helpers
 @using System.Security.Claims
 @using Sudoku.App.Models
 @inject ISudokuRepository SudokuRepository
 @inject NavigationManager NavigationManager
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize]
 
 <h3>SavedSudokus</h3>
@@ -14,9 +12,11 @@
 <div class="row">
     @foreach (var board in _userBoards)
     {
-        <NavLink class="col-6" href="@($"/solve/{board.Id}")">
-            <SudokuBoard Board="board.Board" />
-        </NavLink>
+        <div class="col-6 board">
+            <NavLink href="@($"/solve/{board.Id}")">
+                <ReadonlySudokuBoard Board="board.Board" />
+            </NavLink>
+        </div>
     }
 </div>
 
@@ -35,13 +35,8 @@
             var authState = await AuthState;
             var user = authState.User;
             var id = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
-
-            foreach (var board in await SudokuRepository.GetUserSudoku(id))
-            {
-                Console.WriteLine(board.Board[0, 0].Value);
-            }
             
-            _userBoards.AddRange(await SudokuRepository.GetUserSudoku(id));
+            _userBoards = await SudokuRepository.GetUserSudoku(id);
         }
     }
 
