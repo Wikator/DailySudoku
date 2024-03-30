@@ -17,11 +17,11 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         // language=Cypher
         const string query = """
                              MATCH (u:User {id: $userId})
-                             CREATE (s:Sudoku {
+                             MERGE (s:Sudoku {
                                 id: $id,
                                 solutions: $solutions,
                                 board: $board
-                             })<-[:CREATED]-(u)
+                             })<-[:SAVED]-(u)
                              """;
         
         var parameters = new
@@ -35,29 +35,38 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
-    public async Task<List<SudokuWithId>> GetUserSudoku(string userId)
+    public async Task<PagedResult<SudokuWithId>> GetUserPagedSudoku(string userId, int pageNumber,
+        int pageSize)
     {
         // language=Cypher
         const string query = """
-                             MATCH (:User { id: $userId })-[:CREATED]->(s:Sudoku)
-                             RETURN s.board AS Board, s.id AS Id
+                             MATCH (:User { id: $userId })-[:SAVED]->(s:Sudoku)
+                             WITH COLLECT({ id: s.id, board: s.board }) AS sudoku
+                             RETURN SIZE(sudoku) AS TotalCount, sudoku[$start..$end] AS Items
                              """;
 
         var parameters = new
         {
-            userId
+            userId,
+            // skip = pageSize * (pageNumber - 1),
+            // limit = pageSize
+            start = pageSize * (pageNumber - 1),
+            end = pageSize * pageNumber
         };
 
-        var records = await DataAccess.ExecuteReadListAsync(query, parameters);
+        var record = await DataAccess.ExecuteReadSingleAsync(query, parameters);
+        var totalCount = record["TotalCount"].As<int>();
 
-        return records.Select(record =>
+        var items = record["Items"].As<List<Dictionary<string, object>>>().Select(item =>
         {
-            var boardString = record["Board"].As<string>();
+            var boardString = item["board"].As<string>();
             var board = new SudokuBoard<SudokuDigit>((row, col) =>
                     (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString())
                 );
-            return new SudokuWithId(Guid.Parse(record["Id"].As<string>()), board);
+            return new SudokuWithId(Guid.Parse(item["id"].As<string>()), board);
         }).ToList();
+
+        return new PagedResult<SudokuWithId>(items, pageNumber, pageSize, totalCount);
     }
 
     public async Task<SudokuBoard<SudokuCell>?> GetSudoku(string id)

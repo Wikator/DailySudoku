@@ -1,7 +1,6 @@
 ﻿@page "/RandomSudoku"
-@using Sudoku.App.Helpers
-@using Sudoku.App.Enums
 @inject ISudokuService SudokuService
+@inject ISudokuRepository SudokuRepository
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <h3>RandomSudoku</h3>
@@ -12,12 +11,28 @@
         <div class="alert alert-success">Board solved!</div>
     }
     
+    @if (_boardSaved)
+    {
+        <div class="alert alert-success">Puzzle saved successfully</div>
+    }
+    
     <SudokuBoard Board="Board" OnCellValueChanged="HandleBoardChange" />
+    
+    @if (AuthState is not null)
+    {
+        <div class="text-center">
+            <button class="btn btn-primary" @onclick="SavePuzzle">Save this puzzle</button>
+        </div>
+    }
 </div>
 
 @code {
     SudokuBoard<SudokuCell> Board { get; } = new();
     bool _boardSolved;
+    bool _boardSaved;
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
 
     protected override void OnInitialized()
     {
@@ -41,5 +56,25 @@
     private void HandleBoardChange((int, int) coords)
     {
         _boardSolved = SudokuService.IsSolved(Board);
+    }
+
+    private async Task SavePuzzle()
+    {
+        if (AuthState is null)
+            return;
+        
+        var authState = await AuthState;
+        var user = authState.User;
+        var userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+
+        var puzzle = new SudokuBoard<SudokuDigit>((row, col) =>
+            Board[row, col].IsFixed ? Board[row, col].Value : SudokuDigit.Empty);
+
+        await SudokuRepository.CreateSudokuAsync(puzzle.Board, Solutions.OneSolution, userId);
+
+        _boardSaved = true;
+        StateHasChanged();
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        _boardSaved = false;
     }
 }

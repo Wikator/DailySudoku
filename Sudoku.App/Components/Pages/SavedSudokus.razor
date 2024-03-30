@@ -1,30 +1,60 @@
-@page "/SavedSudokus"
+@page "/SavedSudokus/{page?}"
 
-@using Microsoft.AspNetCore.Authorization
-@using System.Security.Claims
-@using Sudoku.App.Models
 @inject ISudokuRepository SudokuRepository
 @inject NavigationManager NavigationManager
 @attribute [Authorize]
 
-<h3>SavedSudokus</h3>
+<h3>Saved Sudokus</h3>
 
-<div class="row">
-    @foreach (var board in _userBoards)
-    {
-        <div class="col-6 board">
-            <NavLink href="@($"/solve/{board.Id}")">
-                <ReadonlySudokuBoard Board="board.Board" />
-            </NavLink>
-        </div>
-    }
+<div class="container">
+    <div class="row">
+        @foreach (var board in _userBoards)
+        {
+            <div class="col-6 board">
+                <NavLink href="@($"/solve/{board.Id}")">
+                    <ReadonlySudokuBoard Board="board.Board" />
+                </NavLink>
+            </div>
+        }
+    </div>
+    
+    <nav aria-label="Page navigation example">
+        <ul class="pagination">
+            <li class="@(Page == "1" ? "page-item disabled" : "page-item")">
+                <NavLink class="page-link" href="@("/SavedSudokus/1")">
+                    <span aria-hidden="true">&laquo;</span>
+                </NavLink>
+            </li>
+            @for (var i = 1; i <= _totalPages; i++)
+            {
+                var pageNumber = i;
+                <li class="page-item">
+                    <NavLink class="page-link" href="@($"/SavedSudokus/{pageNumber}")">
+                        @pageNumber
+                    </NavLink>
+                </li>
+            }
+            <li class="@(Page == _totalPages.ToString() ? "page-item disabled" : "page-item")">
+                <NavLink class="page-link" href="@($"/SavedSudokus/{_totalPages}")">
+                    <span aria-hidden="true">&raquo;</span>
+                </NavLink>
+            </li>
+        </ul>
+    </nav>
 </div>
 
 @code {
+    [Parameter] public string Page { get; set; } = "";
+    
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
+
+    private string? _userId;
     
     List<SudokuWithId> _userBoards = [];
+    private int _totalPages = 1;
+
+    private const int PageSize = 4;
 
     protected override async Task OnInitializedAsync()
     {
@@ -32,12 +62,25 @@
             NavigationManager.NavigateTo("/");
         else
         {
-            var authState = await AuthState;
-            var user = authState.User;
-            var id = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            if (string.IsNullOrEmpty(Page))
+                Page = "1";
             
-            _userBoards = await SudokuRepository.GetUserSudoku(id);
+            if (int.TryParse(Page, out var pageNumber))
+            {
+                var authState = await AuthState;
+                var user = authState.User;
+                _userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                
+                var pagedBoards = await SudokuRepository.GetUserPagedSudoku(_userId, pageNumber,
+                    PageSize);
+                
+                _userBoards = pagedBoards.Items;
+                _totalPages = pagedBoards.TotalPages;
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/");
+            }
         }
     }
-
 }
