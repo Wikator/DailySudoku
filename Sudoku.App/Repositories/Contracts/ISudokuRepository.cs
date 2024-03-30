@@ -7,4 +7,5 @@ public interface ISudokuRepository
 {
     Task CreateSudokuAsync(SudokuDigit[,] board, Solutions solutions, string userId);
     Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateTime date);
+    Task<SudokuBoard<SudokuCell>> GetLatestDailySudokuAsync();
 }

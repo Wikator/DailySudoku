@@ -1,3 +1,4 @@
+using Neo4j.Driver;
 using Sudoku.App.Enums;
 using Sudoku.App.Extensions;
 using Sudoku.App.Helpers;
@@ -52,5 +53,27 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         };
         
         await DataAccess.ExecuteWriteAsync(query, parameters);
+    }
+
+    public async Task<SudokuBoard<SudokuCell>> GetLatestDailySudokuAsync()
+    {
+        // language=Cypher
+        const string query = """
+                             MATCH (s:DailySudoku)
+                             RETURN
+                               s.board AS Board
+                             ORDER BY s.date DESC
+                             LIMIT 1
+                             """;
+        
+        var result = await DataAccess.ExecuteWriteSingleAsync(query, new object());
+        var boardString = result["Board"].As<string>();
+
+        return new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
+            {
+                Value = (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString()),
+                IsFixed = boardString[row * 9 + col] != '0'
+            });
     }
 }

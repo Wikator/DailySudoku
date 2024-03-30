@@ -2,6 +2,7 @@
 @using Sudoku.App.Helpers
 @using Sudoku.App.Enums
 @inject ISudokuService SudokuService
+@inject ISudokuRepository SudokuRepository
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <PageTitle>Home</PageTitle>
@@ -10,48 +11,56 @@
 
 Welcome to your new app.
 
-<div class="container">
-    @if(_error is not null)
-    {
-        <div class="alert alert-danger" role="alert">
-            @_error
-        </div>
-    }
+@if (_board is not null)
+{
+    <div class="container">
+        @if(_error is not null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @_error
+            </div>
+        }
     
-    <SudokuBoard Board="_board"/>
-    <button @onclick="Solve" class="btn btn-primary">Solve</button>
-</div>
+        <SudokuBoard Board="_board"/>
+        <button @onclick="Solve" class="btn btn-primary">Solve</button>
+    </div>
+}
 
 @code {
     
-    SudokuBoard<SudokuCell> _board = new();
+    SudokuBoard<SudokuCell>? _board;
     string? _error;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var tmp = new[,]
-        {
-            { 0, 0, 5, 3, 0, 0, 0, 0, 0 },
-            { 8, 0, 0, 0, 0, 0, 0, 2, 0 },
-            { 0, 7, 0, 0, 1, 0, 5, 0, 0 },
-            { 4, 0, 0, 0, 0, 5, 3, 0, 0 },
-            { 0, 1, 0, 0, 7, 0, 0, 0, 6 },
-            { 0, 0, 3, 2, 0, 0, 0, 8, 0 },
-            { 0, 6, 0, 5, 0, 0, 0, 0, 9 },
-            { 0, 0, 4, 0, 0, 0, 0, 3, 0 },
-            { 0, 0, 0, 0, 0, 9, 7, 0, 0 }
-        };
-        
-        // Initialize the board with a sample puzzle
-        _board.Fill((row, col) => new SudokuCell
-        {
-            Value = (SudokuDigit)tmp[row, col],
-            IsFixed = tmp[row, col] != 0
-        });
+        // var tmp = new[,]
+        // {
+        //     { 0, 0, 5, 3, 0, 0, 0, 0, 0 },
+        //     { 8, 0, 0, 0, 0, 0, 0, 2, 0 },
+        //     { 0, 7, 0, 0, 1, 0, 5, 0, 0 },
+        //     { 4, 0, 0, 0, 0, 5, 3, 0, 0 },
+        //     { 0, 1, 0, 0, 7, 0, 0, 0, 6 },
+        //     { 0, 0, 3, 2, 0, 0, 0, 8, 0 },
+        //     { 0, 6, 0, 5, 0, 0, 0, 0, 9 },
+        //     { 0, 0, 4, 0, 0, 0, 0, 3, 0 },
+        //     { 0, 0, 0, 0, 0, 9, 7, 0, 0 }
+        // };
+        //
+        // // Initialize the board with a sample puzzle
+        // _board.Fill((row, col) => new SudokuCell
+        // {
+        //     Value = (SudokuDigit)tmp[row, col],
+        //     IsFixed = tmp[row, col] != 0
+        // });
+
+        _board = await SudokuRepository.GetLatestDailySudokuAsync();
     }
 
     private void Solve()
     {
+        if (_board is null)
+            return;
+        
         var stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
 
