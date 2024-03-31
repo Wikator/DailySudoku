@@ -7,6 +7,7 @@ namespace Sudoku.App.Repositories.Contracts;
 public interface ISudokuRepository
 {
     Task CreateSudokuAsync(SudokuDigit[,] board, Solutions solutions, string userId);
+    Task RemoveSudokuFromSaved(string userId, string sudokuId);
     Task<PagedResult<SudokuWithId>> GetUserPagedSudoku(string userId, int pageNumber, int pageSize);
     Task<SudokuBoard<SudokuCell>?> GetSudoku(string id);
     Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateTime date);

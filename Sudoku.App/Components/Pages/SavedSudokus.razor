@@ -12,12 +12,28 @@
         {
             <div class="col-6 board">
                 <NavLink href="@($"/solve/{board.Id}")">
-                    <ReadonlySudokuBoard Board="board.Board" />
+                    <ReadonlySudokuBoard Board="board.Board"/>
                 </NavLink>
+                <form class="text-center" method="post" data-enhance
+                    @formname="@($"delete-form-{board.Id}")"
+                    @onsubmit="_ => DeleteSudoku(board.Id.ToString())">
+                    <button class="btn btn-danger">Remove</button>
+                    <AntiforgeryToken />
+                </form>
+            </div>
+        }
+
+        @for (var i = 0; i < 4 - _userBoards.Count; i++)
+        {
+            <div class="col-6 board">
+                <ReadonlySudokuBoard/>
+                <div class="text-center">
+                    <button class="btn btn-danger disabled">Remove</button>
+                </div>
             </div>
         }
     </div>
-    
+
     <nav aria-label="Page navigation example">
         <ul class="pagination">
             <li class="@(Page == "1" ? "page-item disabled" : "page-item")">
@@ -48,8 +64,6 @@
     
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
-
-    private string? _userId;
     
     List<SudokuWithId> _userBoards = [];
     private int _totalPages = 1;
@@ -69,9 +83,9 @@
             {
                 var authState = await AuthState;
                 var user = authState.User;
-                _userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                var userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
                 
-                var pagedBoards = await SudokuRepository.GetUserPagedSudoku(_userId, pageNumber,
+                var pagedBoards = await SudokuRepository.GetUserPagedSudoku(userId, pageNumber,
                     PageSize);
                 
                 _userBoards = pagedBoards.Items;
@@ -82,5 +96,18 @@
                 NavigationManager.NavigateTo("/");
             }
         }
+    }
+    
+    private async Task DeleteSudoku(string id)
+    {
+        if (AuthState is null)
+            return;
+        
+        var authState = await AuthState;
+        var user = authState.User;
+        var userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+        
+        await SudokuRepository.RemoveSudokuFromSaved(userId, id);
+        NavigationManager.NavigateTo($"/SavedSudokus/{Page}");
     }
 }

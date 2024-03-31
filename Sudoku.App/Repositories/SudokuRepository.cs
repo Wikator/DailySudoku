@@ -35,6 +35,18 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
+    public async Task RemoveSudokuFromSaved(string userId, string sudokuId)
+    {
+        // language=Cypher
+        const string query = """
+                             MATCH (:User { id: $userId })-[r:SAVED]->(:Sudoku { id: $sudokuId })
+                             DELETE r
+                             """;
+
+        var parameters = new { userId, sudokuId };
+        await DataAccess.ExecuteWriteAsync(query, parameters);
+    }
+
     public async Task<PagedResult<SudokuWithId>> GetUserPagedSudoku(string userId, int pageNumber,
         int pageSize)
     {
