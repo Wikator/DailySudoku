@@ -5,7 +5,7 @@ namespace Sudoku.App.Services.SudokuService;
 
 public partial class SudokuService
 {
-    public SudokuBoard<SudokuDigit> GenerateBoard()
+    public Task<SudokuBoard<SudokuDigit>> GenerateBoard()
     {
         var board = new SudokuBoard<SudokuDigit>(SudokuDigit.Empty);
 
@@ -44,7 +44,7 @@ public partial class SudokuService
                 board[coords] = item;
         }
 
-        return board;
+        return Task.FromResult(board);
     }
     
     private static bool IsFull(SudokuBoard<SudokuDigit> cells)

@@ -16,51 +16,68 @@
         <div class="alert alert-success">Puzzle saved successfully</div>
     }
     
-    <SudokuBoard Board="Board" OnCellValueChanged="HandleBoardChange" />
-    
-    @if (AuthState is not null)
+    @if (Board is null)
     {
+        <ReadonlySudokuBoard />
         <div class="text-center">
-            <button class="btn btn-primary" @onclick="SavePuzzle">Save this puzzle</button>
+            Generating...
         </div>
     }
+    else
+    {
+        <SudokuBoard Board="Board" OnCellValueChanged="HandleBoardChange" /> 
+    }
+    
+    <div class="text-center mb-3">
+        <button
+            class="@("btn btn-primary" + (AuthState is null || Board is null ? " disabled" : ""))"
+            @onclick="SavePuzzle">Save this puzzle</button>
+    </div>
+    
+    <div class="text-center">
+        <button
+            class="@("btn btn-primary" + (Board is null ? " disabled" : ""))"
+            @onclick="Solve">Show solution</button>
+    </div>
 </div>
 
 @code {
-    SudokuBoard<SudokuCell> Board { get; } = new();
+    SudokuBoard<SudokuCell>? Board { get; set; }
     bool _boardSolved;
     bool _boardSaved;
     
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        base.OnInitialized();
-
-        var generatedBoard = SudokuService.GenerateBoard();
-
-        for (var i = 0; i < 9; i++)
-        {
-            for (var j = 0; j < 9; j++)
+        await base.OnAfterRenderAsync(firstRender);
+        
+        if (!firstRender)
+            return;
+        
+        var generatedBoard = await SudokuService.GenerateBoard();
+        Board = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
             {
-                Board[i, j] = new SudokuCell
-                {
-                    Value = generatedBoard[i, j],
-                    IsFixed = generatedBoard[i, j] != SudokuDigit.Empty
-                };
-            }
-        }
+                Value = generatedBoard[row, col],
+                IsFixed = generatedBoard[row, col] != SudokuDigit.Empty
+            });
+        
+        StateHasChanged();
     }
 
     private void HandleBoardChange((int, int) coords)
     {
+        if (Board is null)
+            return;
+        
         _boardSolved = SudokuService.IsSolved(Board);
     }
 
     private async Task SavePuzzle()
     {
-        if (AuthState is null)
+        if (AuthState is null || Board is null)
             return;
         
         var authState = await AuthState;
@@ -76,5 +93,20 @@
         StateHasChanged();
         await Task.Delay(TimeSpan.FromSeconds(5));
         _boardSaved = false;
+    }
+
+    private void Solve()
+    {
+        if (Board is null)
+            return;
+
+        var board = new SudokuBoard<SudokuCell>((row, col) =>
+            new SudokuCell
+            {
+                Value = Board[row, col].IsFixed ? Board[row, col].Value : SudokuDigit.Empty,
+                IsFixed = Board[row, col].IsFixed
+            });
+
+        Board = SudokuService.Solve(board);
     }
 }

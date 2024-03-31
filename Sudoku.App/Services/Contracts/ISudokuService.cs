@@ -27,7 +27,7 @@ public interface ISudokuService
     /// Generates completely random sudoku board, with only 1 possible solution.
     /// </summary>
     /// <returns>9x9 sudoku board</returns>
-    SudokuBoard<SudokuDigit> GenerateBoard();
+    Task<SudokuBoard<SudokuDigit>> GenerateBoard();
     
     /// <summary>
     /// Checks if boards is valid, and full.

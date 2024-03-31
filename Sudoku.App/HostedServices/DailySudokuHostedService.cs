@@ -33,7 +33,7 @@ public class DailySudokuHostedService(IServiceProvider serviceProvider) : Backgr
             var sudokuService = scopeServices.GetRequiredService<ISudokuService>();
             var sudokuRepository = scopeServices.GetRequiredService<ISudokuRepository>();
         
-            var board = sudokuService.GenerateBoard();
+            var board = await sudokuService.GenerateBoard();
             var date = DateTime.UtcNow.Date;
             await sudokuRepository.CreateDailySudokuAsync(board, date);
         }
