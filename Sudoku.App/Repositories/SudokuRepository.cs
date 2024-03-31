@@ -47,7 +47,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
-    public async Task<PagedResult<SudokuWithId>> GetUserPagedSudoku(string userId, int pageNumber,
+    public async Task<PagedResult<SudokuWithId<SudokuDigit>>> GetUserPagedSudoku(string userId, int pageNumber,
         int pageSize)
     {
         // language=Cypher
@@ -75,10 +75,10 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
             var board = new SudokuBoard<SudokuDigit>((row, col) =>
                     (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString())
                 );
-            return new SudokuWithId(Guid.Parse(item["id"].As<string>()), board);
+            return new SudokuWithId<SudokuDigit>(Guid.Parse(item["id"].As<string>()), board);
         }).ToList();
 
-        return new PagedResult<SudokuWithId>(items, pageNumber, pageSize, totalCount);
+        return new PagedResult<SudokuWithId<SudokuDigit>>(items, pageNumber, pageSize, totalCount);
     }
 
     public async Task<SudokuBoard<SudokuCell>?> GetSudoku(string id)
@@ -130,25 +130,107 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
-    public async Task<SudokuBoard<SudokuCell>> GetLatestDailySudokuAsync()
+    public async Task<SudokuWithId<SudokuCell>> GetDailySudokuAsync(string? userId = null, int daysAgo = 0)
+    {
+        if (userId is null)
+        {
+            // language=Cypher
+            const string query = """
+                                 MATCH (s:DailySudoku)
+                                 RETURN
+                                   s.board AS Board,
+                                   s.id AS Id
+                                 ORDER BY s.date DESC
+                                 SKIP $daysAgo
+                                 LIMIT 1
+                                 """;
+
+            var parameters = new { daysAgo };
+        
+            var result = await DataAccess.ExecuteWriteSingleAsync(query, parameters);
+            var boardString = result["Board"].As<string>();
+
+            var board = new SudokuBoard<SudokuCell>((row, col) =>
+                new SudokuCell
+                {
+                    Value = (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString()),
+                    IsFixed = boardString[row * 9 + col] != '0'
+                });
+
+            return new SudokuWithId<SudokuCell>(Guid.Parse(result["Id"].As<string>()), board);
+        }
+        else
+        {
+            // language=Cypher
+            const string query = """
+                                 MATCH (s:DailySudoku)
+                                 MATCH (u:User { id: $userId })
+                                 OPTIONAL MATCH (u)-[r:PROGRESS]->(s)
+                                 RETURN CASE
+                                   WHEN r IS NOT NULL THEN { originalBoard: s.board, userBoard: r.board, id: s.id }
+                                   ELSE { board: s.board, id: s.id }
+                                 END AS Result
+                                 ORDER BY s.date DESC
+                                 SKIP $daysAgo
+                                 LIMIT 1
+                                 """;
+
+            var parameters = new
+            {
+                daysAgo,
+                userId
+            };
+        
+            var result = (await DataAccess.ExecuteWriteSingleAsync(query, parameters))["Result"].As<Dictionary<string, object>>();
+
+            if (result.TryGetValue("board", out var value))
+            {
+                var boardString = value.As<string>();
+                var board = new SudokuBoard<SudokuCell>((row, col) =>
+                    new SudokuCell
+                    {
+                        Value = (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString()),
+                        IsFixed = boardString[row * 9 + col] != '0'
+                    });
+
+                return new SudokuWithId<SudokuCell>(Guid.Parse(result["id"].As<string>()), board);
+            }
+            else
+            {
+                var originalBoardString = result["originalBoard"].As<string>();
+                var userBoardString = result["userBoard"].As<string>();
+            
+                var board = new SudokuBoard<SudokuCell>((row, col) =>
+                    new SudokuCell
+                    {
+                        Value = (SudokuDigit)int.Parse(userBoardString[row * 9 + col].ToString()),
+                        IsFixed = originalBoardString[row * 9 + col] != '0'
+                    });
+
+                return new SudokuWithId<SudokuCell>(Guid.Parse(result["id"].As<string>()), board);
+            }
+        }
+    }
+
+    public async Task SaveDailySudokuProgress(string userId, string sudokuId,
+        SudokuBoard<SudokuDigit> board, bool isSolved)
     {
         // language=Cypher
         const string query = """
-                             MATCH (s:DailySudoku)
-                             RETURN
-                               s.board AS Board
-                             ORDER BY s.date DESC
-                             LIMIT 1
+                             MATCH (s:DailySudoku { id: $sudokuId })
+                             MATCH (u:User { id: $userId })
+                             MERGE (u)-[r:PROGRESS]->(s)
+                             SET r.board = $board, r.isSolved = $isSolved
                              """;
-        
-        var result = await DataAccess.ExecuteWriteSingleAsync(query, new object());
-        var boardString = result["Board"].As<string>();
 
-        return new SudokuBoard<SudokuCell>((row, col) =>
-            new SudokuCell
-            {
-                Value = (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString()),
-                IsFixed = boardString[row * 9 + col] != '0'
-            });
+        var parameters = new
+        {
+            sudokuId,
+            userId,
+            isSolved,
+            board = board.Board.ToBoardString()
+        };
+
+        await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 }

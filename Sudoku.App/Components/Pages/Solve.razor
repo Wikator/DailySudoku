@@ -1,5 +1,4 @@
 @page "/Solve/{id}"
-@using Sudoku.App.Helpers
 @inject NavigationManager NavigationManager
 @inject ISudokuRepository SudokuRepository
 @inject ISudokuService SudokuService
@@ -44,7 +43,7 @@
         }
     }
 
-    private void HandleCellChanged((int, int) coords)
+    private void HandleCellChanged()
     {
         if (_board is null)
             return;

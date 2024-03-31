@@ -1,6 +1,4 @@
 ﻿@page "/"
-@using Sudoku.App.Helpers
-@using Sudoku.App.Enums
 @inject ISudokuService SudokuService
 @inject ISudokuRepository SudokuRepository
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
@@ -28,51 +26,41 @@ Welcome to your new app.
             </div>
         }
     
-        <SudokuBoard Board="_board" OnCellValueChanged="HandleCellChanged" />
+        <SudokuBoard Board="_board.Board" OnCellValueChanged="HandleCellChanged" />
         <button @onclick="Solve" class="btn btn-primary">Solve</button>
     </div>
 }
 
 @code {
     
-    SudokuBoard<SudokuCell>? _board;
+    SudokuWithId<SudokuCell>? _board;
     string? _error;
     bool _isSolved;
+    string? _userId;
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        // var tmp = new[,]
-        // {
-        //     { 0, 0, 5, 3, 0, 0, 0, 0, 0 },
-        //     { 8, 0, 0, 0, 0, 0, 0, 2, 0 },
-        //     { 0, 7, 0, 0, 1, 0, 5, 0, 0 },
-        //     { 4, 0, 0, 0, 0, 5, 3, 0, 0 },
-        //     { 0, 1, 0, 0, 7, 0, 0, 0, 6 },
-        //     { 0, 0, 3, 2, 0, 0, 0, 8, 0 },
-        //     { 0, 6, 0, 5, 0, 0, 0, 0, 9 },
-        //     { 0, 0, 4, 0, 0, 0, 0, 3, 0 },
-        //     { 0, 0, 0, 0, 0, 9, 7, 0, 0 }
-        // };
-        //
-        // // Initialize the board with a sample puzzle
-        // _board.Fill((row, col) => new SudokuCell
-        // {
-        //     Value = (SudokuDigit)tmp[row, col],
-        //     IsFixed = tmp[row, col] != 0
-        // });
-
-        _board = await SudokuRepository.GetLatestDailySudokuAsync();
+        if (AuthState is null)
+            _board = await SudokuRepository.GetDailySudokuAsync();
+        else
+        {
+            var authState = await AuthState;
+            var user = authState.User;
+            _userId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            
+            _board = await SudokuRepository.GetDailySudokuAsync(_userId);
+        }
     }
 
     private void Solve()
     {
         if (_board is null)
             return;
-        
-        var stopwatch = new System.Diagnostics.Stopwatch();
-        stopwatch.Start();
 
-        var result = SudokuService.ValidateAndSolve(_board);
+        var result = SudokuService.ValidateAndSolve(_board.Board);
 
         if (result is null)
         {
@@ -81,19 +69,25 @@ Welcome to your new app.
         else
         {
             _error = null;
-            _board = result;
+            _board = _board with { Board = result };
         }
-        
-        stopwatch.Stop();
-        var microseconds = stopwatch.ElapsedTicks / (System.Diagnostics.Stopwatch.Frequency / (1000L*1000L));
-        Console.WriteLine($"Solving took {microseconds}μs");
     }
 
-    private void HandleCellChanged((int, int) coords)
+    private async Task HandleCellChanged()
     {
         if (_board is null)
             return;
         
-        _isSolved = SudokuService.IsSolved(_board);
+        _isSolved = SudokuService.IsSolved(_board.Board);
+        
+        if (_userId is null)
+            return;
+        
+        Console.WriteLine("Got here");
+
+        var boardToSave = new SudokuBoard<SudokuDigit>((row, col) =>
+            _board.Board[row, col].Value);
+
+        await SudokuRepository.SaveDailySudokuProgress(_userId, _board.Id.ToString(), boardToSave, _isSolved);
     }
 }

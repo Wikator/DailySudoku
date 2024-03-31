@@ -14,6 +14,7 @@
                     var col = j;
                     <td
                         tabindex="0"
+                        class="@(Board[row, col].IsFixed ? "fixed-digit" : "digit")"
                         @ref="_cellRefs[row, col]"
                         @onclick="_ => Focus(row, col)"
                         @onkeydown="e => HandleKeyDown(e, row, col)"> @Board[i, j].Value.ToDigitString()
@@ -22,12 +23,15 @@
             </tr>
         }
     </table>
+    <div class="text-center">
+        <button class="btn btn-warning btn-sm" @onclick="Reset">Reset</button>
+    </div>
 }
 
 
 @code {
     [Parameter] public SudokuBoard<SudokuCell>? Board { get; set; }
-    [Parameter] public EventCallback<(int, int)> OnCellValueChanged { get; set; }
+    [Parameter] public EventCallback OnCellValueChanged { get; set; }
     private readonly ElementReference[,] _cellRefs = new ElementReference[9, 9];
 
     protected override void OnInitialized()
@@ -54,11 +58,28 @@
             return;
         
         Board[row, col].Value = (SudokuDigit)number;
-        OnCellValueChanged.InvokeAsync((row, col));
+        OnCellValueChanged.InvokeAsync();
     }
 
     private async Task Focus(int i, int j)
     {
         await _cellRefs[i, j].FocusAsync();
+    }
+
+    private async Task Reset()
+    {
+        if (Board is null)
+            return;
+        
+        for (var i = 0; i < 9; i++)
+        {
+            for (var j = 0; j < 9; j++)
+            {
+                if (!Board[i, j].IsFixed)
+                    Board[i, j].Value = SudokuDigit.Empty;
+            }
+        }
+
+        await OnCellValueChanged.InvokeAsync();
     }
 }

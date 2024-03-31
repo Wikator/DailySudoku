@@ -1,9 +1,5 @@
 @page "/sudoku/maker"
-@using Microsoft.AspNetCore.Authorization
-@using Sudoku.App.Enums
-@using System.Security.Claims
 @using Sudoku.App.Extensions
-@using Sudoku.App.Helpers
 @inject ISudokuRepository SudokuRepository
 @inject ISudokuService SudokuService
 @attribute [Authorize]
@@ -65,7 +61,7 @@
         }
     }
 
-    private void HowManySolutions((int, int) coords)
+    private void HowManySolutions()
     {
         _solutions = SudokuService.SolutionCount(new SudokuBoard<SudokuDigit>(Board.Board.ToDigits()));
     }

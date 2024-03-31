@@ -3,4 +3,4 @@ using Sudoku.App.Helpers;
 
 namespace Sudoku.App.Models;
 
-public record SudokuWithId(Guid Id, SudokuBoard<SudokuDigit> Board);
+public record SudokuWithId<T>(Guid Id, SudokuBoard<T> Board);
