@@ -8,7 +8,7 @@
 
 <div class="container">
     <div class="row">
-        @foreach (var board in _userBoards)
+        @foreach (var board in _pagedBoards?.Items ?? [])
         {
             <div class="col-6 board">
                 <NavLink href="@($"/solve/{board.Id}")">
@@ -23,40 +23,18 @@
             </div>
         }
 
-        @for (var i = 0; i < 4 - _userBoards.Count; i++)
+        @for (var i = 0; i < (_pagedBoards is null ? 4 : 4 - _pagedBoards.Items.Count); i++)
         {
             <div class="col-6 board">
-                <ReadonlySudokuBoard/>
+                <ReadonlySudokuBoard />
                 <div class="text-center">
                     <button class="btn btn-danger disabled">Remove</button>
                 </div>
             </div>
         }
     </div>
-
-    <nav aria-label="Page navigation example">
-        <ul class="pagination">
-            <li class="@(Page == "1" ? "page-item disabled" : "page-item")">
-                <NavLink class="page-link" href="@("/SavedSudokus/1")">
-                    <span aria-hidden="true">&laquo;</span>
-                </NavLink>
-            </li>
-            @for (var i = 1; i <= _totalPages; i++)
-            {
-                var pageNumber = i;
-                <li class="page-item">
-                    <NavLink class="page-link" href="@($"/SavedSudokus/{pageNumber}")">
-                        @pageNumber
-                    </NavLink>
-                </li>
-            }
-            <li class="@(Page == _totalPages.ToString() ? "page-item disabled" : "page-item")">
-                <NavLink class="page-link" href="@($"/SavedSudokus/{_totalPages}")">
-                    <span aria-hidden="true">&raquo;</span>
-                </NavLink>
-            </li>
-        </ul>
-    </nav>
+    
+    <ServerSidePaginator T="SudokuWithId" PagedResult="_pagedBoards" NavigateUrl="/SavedSudokus/" />
 </div>
 
 @code {
@@ -64,14 +42,15 @@
     
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
-    
-    List<SudokuWithId> _userBoards = [];
-    private int _totalPages = 1;
+
+    private PagedResult<SudokuWithId>? _pagedBoards;
 
     private const int PageSize = 4;
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Delay(200);
+        
         if (AuthState is null)
             NavigationManager.NavigateTo("/");
         else
@@ -85,11 +64,8 @@
                 var user = authState.User;
                 var userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
                 
-                var pagedBoards = await SudokuRepository.GetUserPagedSudoku(userId, pageNumber,
+                _pagedBoards = await SudokuRepository.GetUserPagedSudoku(userId, pageNumber,
                     PageSize);
-                
-                _userBoards = pagedBoards.Items;
-                _totalPages = pagedBoards.TotalPages;
             }
             else
             {

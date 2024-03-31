@@ -1,0 +1,51 @@
+@typeparam T
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination text-center">
+        @if (PagedResult is null)
+        {
+            <li class="page-item disabled">
+                <NavLink class="page-link" href="@($"{NavigateUrl}1")">
+                    <span aria-hidden="true">&laquo;</span>
+                </NavLink>
+            </li>
+            <li class="page-item disabled">
+                <NavLink class="page-link" href="@($"{NavigateUrl}1")">
+                    1
+                </NavLink>
+            </li>
+            <li class="page-item disabled">
+                <NavLink class="page-link" href="@($"{NavigateUrl}1")">
+                    <span aria-hidden="true">&raquo;</span>
+                </NavLink>
+            </li>
+        }
+        else
+        {
+            <li class="@(PagedResult.PageNumber == 1 ? "page-item disabled" : "page-item")">
+                <NavLink class="page-link" href="@($"{NavigateUrl}{PagedResult.PageNumber - 1}")">
+                    <span aria-hidden="true">&laquo;</span>
+                </NavLink>
+            </li>
+            @for (var i = 1; i <= PagedResult.TotalPages; i++)
+            {
+                var pageNumber = i;
+                <li class="@(PagedResult.PageNumber == pageNumber ? "page-item disabled" : "page-item")">
+                    <NavLink class="page-link" href="@($"{NavigateUrl}{pageNumber}")">
+                        @pageNumber
+                    </NavLink>
+                </li>
+            }
+            <li class="@(PagedResult.PageNumber == PagedResult.TotalPages ? "page-item disabled" : "page-item")">
+                <NavLink class="page-link" href="@($"{NavigateUrl}{PagedResult.PageNumber + 1}")">
+                    <span aria-hidden="true">&raquo;</span>
+                </NavLink>
+            </li>
+        }
+    </ul>
+</nav>
+
+@code {
+    [Parameter] public PagedResult<T>? PagedResult { get; set; }
+    [Parameter] public string NavigateUrl { get; set; } = "/";
+}
