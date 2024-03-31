@@ -12,7 +12,7 @@
         {
             <div class="col-6 board">
                 <NavLink href="@($"/solve/{board.Id}")">
-                    <ReadonlySudokuBoard Board="board.Board"/>
+                    <ReadonlySudokuBoard Board="board.Board" Solutions="board.Solutions" />
                 </NavLink>
                 <form class="text-center" method="post" data-enhance
                     @formname="@($"delete-form-{board.Id}")"

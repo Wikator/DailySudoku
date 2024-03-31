@@ -27,6 +27,7 @@ Welcome to your new app.
         }
     
         <SudokuBoard Board="_board.Board" OnCellValueChanged="HandleCellChanged" IsSolved="e => _isSolved = e" />
+        <button @onclick="PreviousDay" class="btn btn-warning">Play previous say</button>
         <button @onclick="Solve" class="btn btn-primary">Solve</button>
     </div>
 }
@@ -44,14 +45,14 @@ Welcome to your new app.
     protected override async Task OnInitializedAsync()
     {
         if (AuthState is null)
-            _board = await SudokuRepository.GetDailySudokuAsync();
+            _board = await SudokuRepository.GetDailySudokuAsync(null, DateOnly.FromDateTime(DateTime.Now));
         else
         {
             var authState = await AuthState;
             var user = authState.User;
             _userId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             
-            _board = await SudokuRepository.GetDailySudokuAsync(_userId);
+            _board = await SudokuRepository.GetDailySudokuAsync(_userId, DateOnly.FromDateTime(DateTime.Now));
         }
     }
 
@@ -72,6 +73,11 @@ Welcome to your new app.
             _board = _board with { Board = result };
             _isSolved = true;
         }
+    }
+
+    private async Task PreviousDay()
+    {
+        _board = await SudokuRepository.GetDailySudokuAsync(_userId, DateOnly.FromDateTime(DateTime.Now.AddDays(-1)));
     }
 
     private async Task HandleCellChanged()

@@ -6,10 +6,10 @@
     <table>
         @for (var i = 0; i < 9; i++)
         {
-            <tr>
+            <tr class="@($"{ClassName()}-solution-tr")">
                 @for (var j = 0; j < 9; j++)
                 {
-                    <td>
+                    <td class="@($"{ClassName()}-solution-td")">
                         @Board[i, j].ToDigitString()
                     </td>
                 }
@@ -21,6 +21,7 @@
 
 @code {
     [Parameter] public SudokuBoard<SudokuDigit>? Board { get; set; }
+    [Parameter] public Solutions? Solutions { get; set; }
 
     protected override void OnInitialized()
     {
@@ -31,4 +32,13 @@
         
         Board = new SudokuBoard<SudokuDigit>(SudokuDigit.Empty);
     }
+
+    private string ClassName() =>
+        Solutions switch
+        {
+            Enums.Solutions.NoSolution => "no",
+            Enums.Solutions.MultipleSolutions => "multiple",
+            Enums.Solutions.OneSolution => "one",
+            _ => "unknown"
+        };
 }

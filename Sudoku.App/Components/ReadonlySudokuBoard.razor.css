@@ -1,22 +1,83 @@
 table {
     margin:1em auto;
 }
-td {
+
+.unknown-solution-td {
     height:30px;
     width:30px;
-    border:1px solid;
+    border:1px solid black;
     text-align:center;
 }
 
-td:first-child {
-    border-left:solid;
+.unknown-solution-td:first-child {
+    border-left:solid black;
 }
-td:nth-child(3n) {
-    border-right:solid ;
+.unknown-solution-td:nth-child(3n) {
+    border-right:solid black;
 }
-tr:first-child {
-    border-top:solid;
+.unknown-solution-tr:first-child {
+    border-top:solid black;
 }
-tr:nth-child(3n) td {
-    border-bottom:solid ;
+.unknown-solution-tr:nth-child(3n) .unknown-solution-td {
+    border-bottom:solid black;
+}
+
+.one-solution-td {
+    height:30px;
+    width:30px;
+    border:1px solid green;
+    text-align:center;
+}
+
+.one-solution-td:first-child {
+    border-left:solid green;
+}
+.one-solution-td:nth-child(3n) {
+    border-right:solid green;
+}
+.one-solution-tr:first-child {
+    border-top:solid green;
+}
+.one-solution-tr:nth-child(3n) .one-solution-td {
+    border-bottom:solid green;
+}
+
+.multiple-solution-td {
+    height:30px;
+    width:30px;
+    border:1px solid darkgoldenrod;
+    text-align:center;
+}
+
+.multiple-solution-td:first-child {
+    border-left:solid darkgoldenrod;
+}
+.multiple-solution-td:nth-child(3n) {
+    border-right:solid darkgoldenrod;
+}
+.multiple-solution-tr:first-child {
+    border-top:solid darkgoldenrod;
+}
+.multiple-solution-tr:nth-child(3n) .multiple-solution-td {
+    border-bottom:solid darkgoldenrod;
+}
+
+.no-solution-td {
+    height:30px;
+    width:30px;
+    border:1px solid red;
+    text-align:center;
+}
+
+.no-solution-td:first-child {
+    border-left:solid red;
+}
+.no-solution-td:nth-child(3n) {
+    border-right:solid red;
+}
+.no-solution-tr:first-child {
+    border-top:solid red;
+}
+.no-solution-tr:nth-child(3n) .no-solution-td {
+    border-bottom:solid red;
 }

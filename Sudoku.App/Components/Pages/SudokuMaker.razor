@@ -27,6 +27,11 @@
         </div>
             break;
     }
+    
+    @if (_boardSaved)
+    {
+        <div class="alert alert-success">Puzzle saved successfully</div>
+    }
 
     <SudokuBoard Board="Board" OnCellValueChanged="HowManySolutions"/>
     
@@ -43,6 +48,8 @@
     private Solutions _solutions = Solutions.MultipleSolutions;
     
     private SudokuBoard<SudokuCell> Board { get; } = new();
+    
+    bool _boardSaved;
 
     protected override void OnInitialized()
     {
@@ -76,6 +83,11 @@
         var id = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
         await SudokuRepository.CreateSudokuAsync(Board.Board.ToDigits(), _solutions, id);
+        
+        _boardSaved = true;
+        StateHasChanged();
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        _boardSaved = false;
     }
 
 }

@@ -53,15 +53,13 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         // language=Cypher
         const string query = """
                              MATCH (:User { id: $userId })-[:SAVED]->(s:Sudoku)
-                             WITH COLLECT({ id: s.id, board: s.board }) AS sudoku
+                             WITH COLLECT({ id: s.id, board: s.board, solutions: s.solutions }) AS sudoku
                              RETURN SIZE(sudoku) AS TotalCount, sudoku[$start..$end] AS Items
                              """;
 
         var parameters = new
         {
             userId,
-            // skip = pageSize * (pageNumber - 1),
-            // limit = pageSize
             start = pageSize * (pageNumber - 1),
             end = pageSize * pageNumber
         };
@@ -75,7 +73,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
             var board = new SudokuBoard<SudokuDigit>((row, col) =>
                     (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString())
                 );
-            return new SudokuWithId(Guid.Parse(item["id"].As<string>()), board);
+            return new SudokuWithId(Guid.Parse(item["id"].As<string>()), board, (Solutions)item["solutions"].As<int>());
         }).ToList();
 
         return new PagedResult<SudokuWithId>(items, pageNumber, pageSize, totalCount);
@@ -109,7 +107,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         }
     }
 
-    public async Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateTime date)
+    public async Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateOnly date)
     {
         // language=Cypher
         const string query = """
@@ -117,7 +115,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                                 id: $id,
                                 date: $date,
                                 board: $board
-                             })<-[:CREATED]-(u)
+                             })
                              """;
 
         var parameters = new
@@ -130,7 +128,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
-    public async Task<SudokuWithIdAndValidation> GetDailySudokuAsync(string? userId = null, int daysAgo = 0)
+    public async Task<SudokuWithIdAndValidation> GetDailySudokuAsync(string? userId, DateOnly date)
     {
         if (userId is null)
         {
@@ -145,7 +143,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                                  LIMIT 1
                                  """;
 
-            var parameters = new { daysAgo };
+            var parameters = new {  };
         
             var result = await DataAccess.ExecuteWriteSingleAsync(query, parameters);
             var boardString = result["Board"].As<string>();
@@ -163,21 +161,18 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         {
             // language=Cypher
             const string query = """
-                                 MATCH (s:DailySudoku)
+                                 MATCH (s:DailySudoku { date: $date })
                                  MATCH (u:User { id: $userId })
                                  OPTIONAL MATCH (u)-[r:PROGRESS]->(s)
                                  RETURN CASE
                                    WHEN r IS NOT NULL THEN { originalBoard: s.board, userBoard: r.board, id: s.id }
                                    ELSE { board: s.board, id: s.id }
                                  END AS Result
-                                 ORDER BY s.date DESC
-                                 SKIP $daysAgo
-                                 LIMIT 1
                                  """;
 
             var parameters = new
             {
-                daysAgo,
+                date,
                 userId
             };
         
@@ -210,6 +205,26 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                 return new SudokuWithIdAndValidation(Guid.Parse(result["id"].As<string>()), board);
             }
         }
+    }
+
+    public async Task<bool> DailySudokuExists(DateOnly date)
+    {
+        // language=Cypher
+        const string query = """
+                             MATCH (s:DailySudoku { date: $date })
+                             RETURN COUNT(s) > 0 AS Exists
+                             """;
+
+        var parameters = new { date };
+
+        var result = await DataAccess.ExecuteReadSingleAsync(query, parameters);
+        return result["Exists"].As<bool>();
+    }
+
+    public Task<(BoardStatus?, BoardStatus?, BoardStatus, BoardStatus?, BoardStatus?)> GetDailySudokuStatuses(
+        string? userId = null, int daysAgo = 0)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task SaveDailySudokuProgress(string userId, string sudokuId,
