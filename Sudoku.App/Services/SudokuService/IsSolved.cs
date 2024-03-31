@@ -5,10 +5,20 @@ namespace Sudoku.App.Services.SudokuService;
 
 public partial class SudokuService
 {
-    public bool IsSolved(SudokuBoard<SudokuCell> cells)
+    public bool IsSolved(SudokuBoard<SudokuCell> cells, out SudokuBoard<bool> illegalDigits)
     {
-        var digits = new SudokuBoard<SudokuDigit>((row, col) => cells[row, col].Value);
+        illegalDigits = CheckBoardValidity(cells);
 
-        return IsFull(digits) && CheckBoardValidity(digits);
+        for (var row = 0; row < BoardSize; row++)
+        {
+            for (var col = 0; col < BoardSize; col++)
+            {
+                if (illegalDigits[row, col])
+                    return false;
+            }
+        }
+        
+        var digits = new SudokuBoard<SudokuDigit>((row, col) => cells[row, col].Value);
+        return IsFull(digits);
     }
 }

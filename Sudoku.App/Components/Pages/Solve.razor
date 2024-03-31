@@ -1,7 +1,6 @@
 @page "/Solve/{id}"
 @inject NavigationManager NavigationManager
 @inject ISudokuRepository SudokuRepository
-@inject ISudokuService SudokuService
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <h3>Solve</h3>
@@ -17,7 +16,7 @@
             </div>
         }
     
-        <SudokuBoard Board="_board" OnCellValueChanged="HandleCellChanged" />
+        <SudokuBoard Board="_board" IsSolved="e => _isSolved = e" />
     </div>
 }
 
@@ -41,13 +40,5 @@
 
             _board = board;
         }
-    }
-
-    private void HandleCellChanged()
-    {
-        if (_board is null)
-            return;
-        
-        _isSolved = SudokuService.IsSolved(_board);
     }
 }

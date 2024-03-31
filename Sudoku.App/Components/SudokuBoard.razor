@@ -1,64 +1,69 @@
 @using Sudoku.App.Helpers
 @using Sudoku.App.Enums
+@inject ISudokuService SudokuService
 @rendermode InteractiveServer
 
-@if (Board is not null)
-{
-    <table>
-        @for (var i = 0; i < 9; i++)
-        {
-            <tr>
-                @for (var j = 0; j < 9; j++)
-                {
-                    var row = i;
-                    var col = j;
-                    <td
-                        tabindex="0"
-                        class="@(Board[row, col].IsFixed ? "fixed-digit" : "digit")"
-                        @ref="_cellRefs[row, col]"
-                        @onclick="_ => Focus(row, col)"
-                        @onkeydown="e => HandleKeyDown(e, row, col)"> @Board[i, j].Value.ToDigitString()
-                    </td>
-                }
-            </tr>
-        }
-    </table>
-    <div class="text-center">
-        <button class="btn btn-warning btn-sm" @onclick="Reset">Reset</button>
-    </div>
-}
+<table>
+    @for (var i = 0; i < 9; i++)
+    {
+        <tr>
+            @for (var j = 0; j < 9; j++)
+            {
+                var row = i;
+                var col = j;
+                <td
+                    tabindex="0"
+                    class="@(Board[row, col].IsFixed ? "fixed-digit" : Validation[row, col] ? "wrong-digit" : "digit")"
+                    @ref="_cellRefs[row, col]"
+                    @onclick="_ => Focus(row, col)"
+                    @onkeydown="e => HandleKeyDown(e, row, col)"> @Board[i, j].Value.ToDigitString()
+                </td>
+            }
+        </tr>
+    }
+</table>
+<div class="text-center">
+    <button class="btn btn-warning btn-sm" @onclick="Reset">Reset</button>
+</div>
 
 
 @code {
-    [Parameter] public SudokuBoard<SudokuCell>? Board { get; set; }
+    private SudokuBoard<SudokuCell>? _board;
+    
+    [Parameter] public SudokuBoard<SudokuCell> Board { get; set; } = new(
+        new SudokuCell
+        {
+            Value = 0,
+            IsFixed = false
+        });
+    
     [Parameter] public EventCallback OnCellValueChanged { get; set; }
+    [Parameter] public EventCallback<bool> IsSolved { get; set; }
+    private SudokuBoard<bool> Validation { get; set; } = new(false);
     private readonly ElementReference[,] _cellRefs = new ElementReference[9, 9];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
-
-        if (Board is not null)
-            return;
+        await base.OnInitializedAsync();
         
-        Board = new SudokuBoard<SudokuCell>(
-            new SudokuCell
-            {
-                Value = 0,
-                IsFixed = false
-            });
+        await IsSolved.InvokeAsync(SudokuService.IsSolved(Board, out var illegalDigits));
+        Validation = illegalDigits;
     }
 
-    private void HandleKeyDown(KeyboardEventArgs e, int row, int col)
+    private async Task HandleKeyDown(KeyboardEventArgs e, int row, int col)
     {
-        if (Board is null || !int.TryParse(e.Key, out var number))
+        if (!int.TryParse(e.Key, out var number))
             return;
 
         if (Board[row, col].IsFixed)
             return;
         
         Board[row, col].Value = (SudokuDigit)number;
-        OnCellValueChanged.InvokeAsync();
+
+        await IsSolved.InvokeAsync(SudokuService.IsSolved(Board, out var illegalDigits));
+        Validation = illegalDigits;
+        
+        await OnCellValueChanged.InvokeAsync();
     }
 
     private async Task Focus(int i, int j)
@@ -68,9 +73,6 @@
 
     private async Task Reset()
     {
-        if (Board is null)
-            return;
-        
         for (var i = 0; i < 9; i++)
         {
             for (var j = 0; j < 9; j++)
@@ -79,6 +81,9 @@
                     Board[i, j].Value = SudokuDigit.Empty;
             }
         }
+
+        await IsSolved.InvokeAsync(SudokuService.IsSolved(Board, out var illegalDigits));
+        Validation = illegalDigits;
 
         await OnCellValueChanged.InvokeAsync();
     }

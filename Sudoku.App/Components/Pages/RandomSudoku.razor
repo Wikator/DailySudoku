@@ -25,7 +25,7 @@
     }
     else
     {
-        <SudokuBoard Board="Board" OnCellValueChanged="HandleBoardChange" /> 
+        <SudokuBoard Board="Board" IsSolved="e => _boardSolved = e" /> 
     }
     
     <div class="text-center mb-3">
@@ -65,14 +65,6 @@
             });
         
         StateHasChanged();
-    }
-
-    private void HandleBoardChange()
-    {
-        if (Board is null)
-            return;
-        
-        _boardSolved = SudokuService.IsSolved(Board);
     }
 
     private async Task SavePuzzle()

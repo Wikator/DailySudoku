@@ -26,14 +26,14 @@ Welcome to your new app.
             </div>
         }
     
-        <SudokuBoard Board="_board.Board" OnCellValueChanged="HandleCellChanged" />
+        <SudokuBoard Board="_board.Board" OnCellValueChanged="HandleCellChanged" IsSolved="e => _isSolved = e" />
         <button @onclick="Solve" class="btn btn-primary">Solve</button>
     </div>
 }
 
 @code {
     
-    SudokuWithId<SudokuCell>? _board;
+    SudokuWithIdAndValidation? _board;
     string? _error;
     bool _isSolved;
     string? _userId;
@@ -70,21 +70,15 @@ Welcome to your new app.
         {
             _error = null;
             _board = _board with { Board = result };
+            _isSolved = true;
         }
     }
 
     private async Task HandleCellChanged()
     {
-        if (_board is null)
+        if (_board is null || _userId is null)
             return;
         
-        _isSolved = SudokuService.IsSolved(_board.Board);
-        
-        if (_userId is null)
-            return;
-        
-        Console.WriteLine("Got here");
-
         var boardToSave = new SudokuBoard<SudokuDigit>((row, col) =>
             _board.Board[row, col].Value);
 

@@ -34,14 +34,14 @@ public interface ISudokuService
     /// </summary>
     /// <param name="cells">9x9 sudoku boards</param>
     /// <returns>True if board is solved, false otherwise</returns>
-    bool IsSolved(SudokuBoard<SudokuCell> cells);
+    bool IsSolved(SudokuBoard<SudokuCell> cells, out SudokuBoard<bool> illegalDigits);
 
     /// <summary>
     /// Checks if current sudoku board contains any errors.
     /// </summary>
     /// <param name="cells">9x9 sudoku board</param>
     /// <returns>True if board is valid, false otherwise</returns>
-    bool CheckBoardValidity(SudokuBoard<SudokuDigit> cells);
+    SudokuBoard<bool> CheckBoardValidity(SudokuBoard<SudokuCell> cells);
 
     /// <summary>
     /// Check if the board has no solution, 1 solution, or more than 1 solution.

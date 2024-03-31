@@ -47,7 +47,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
-    public async Task<PagedResult<SudokuWithId<SudokuDigit>>> GetUserPagedSudoku(string userId, int pageNumber,
+    public async Task<PagedResult<SudokuWithId>> GetUserPagedSudoku(string userId, int pageNumber,
         int pageSize)
     {
         // language=Cypher
@@ -75,10 +75,10 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
             var board = new SudokuBoard<SudokuDigit>((row, col) =>
                     (SudokuDigit)int.Parse(boardString[row * 9 + col].ToString())
                 );
-            return new SudokuWithId<SudokuDigit>(Guid.Parse(item["id"].As<string>()), board);
+            return new SudokuWithId(Guid.Parse(item["id"].As<string>()), board);
         }).ToList();
 
-        return new PagedResult<SudokuWithId<SudokuDigit>>(items, pageNumber, pageSize, totalCount);
+        return new PagedResult<SudokuWithId>(items, pageNumber, pageSize, totalCount);
     }
 
     public async Task<SudokuBoard<SudokuCell>?> GetSudoku(string id)
@@ -130,7 +130,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
-    public async Task<SudokuWithId<SudokuCell>> GetDailySudokuAsync(string? userId = null, int daysAgo = 0)
+    public async Task<SudokuWithIdAndValidation> GetDailySudokuAsync(string? userId = null, int daysAgo = 0)
     {
         if (userId is null)
         {
@@ -157,7 +157,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                     IsFixed = boardString[row * 9 + col] != '0'
                 });
 
-            return new SudokuWithId<SudokuCell>(Guid.Parse(result["Id"].As<string>()), board);
+            return new SudokuWithIdAndValidation(Guid.Parse(result["Id"].As<string>()), board);
         }
         else
         {
@@ -193,7 +193,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                         IsFixed = boardString[row * 9 + col] != '0'
                     });
 
-                return new SudokuWithId<SudokuCell>(Guid.Parse(result["id"].As<string>()), board);
+                return new SudokuWithIdAndValidation(Guid.Parse(result["id"].As<string>()), board);
             }
             else
             {
@@ -207,7 +207,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                         IsFixed = originalBoardString[row * 9 + col] != '0'
                     });
 
-                return new SudokuWithId<SudokuCell>(Guid.Parse(result["id"].As<string>()), board);
+                return new SudokuWithIdAndValidation(Guid.Parse(result["id"].As<string>()), board);
             }
         }
     }
