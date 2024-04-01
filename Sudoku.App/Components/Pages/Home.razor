@@ -35,6 +35,9 @@ Welcome to your new app.
 @code {
     
     SudokuWithIdAndValidation? _board;
+
+    List<DailySudokuStatus> _statuses = new();
+    
     string? _error;
     bool _isSolved;
     string? _userId;
@@ -45,18 +48,23 @@ Welcome to your new app.
     protected override async Task OnInitializedAsync()
     {
         if (AuthState is null)
-            _board = await SudokuRepository.GetDailySudokuAsync(null, DateOnly.FromDateTime(DateTime.Now));
+        {
+            _statuses = await SudokuRepository.GetDailySudokuStatuses(null);
+            _board = await SudokuRepository.GetDailySudokuAsync(null, _statuses.First().Date);
+        }
         else
         {
             var authState = await AuthState;
             var user = authState.User;
             _userId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            
-            _board = await SudokuRepository.GetDailySudokuAsync(_userId, DateOnly.FromDateTime(DateTime.Now));
+
+            _statuses = await SudokuRepository.GetDailySudokuStatuses(_userId);
+            Console.WriteLine(_statuses.First().Status);
+            _board = await SudokuRepository.GetDailySudokuAsync(_userId, _statuses.First().Date);
         }
     }
 
-    private void Solve()
+    private async Task Solve()
     {
         if (_board is null)
             return;
@@ -72,6 +80,14 @@ Welcome to your new app.
             _error = null;
             _board = _board with { Board = result };
             _isSolved = true;
+            
+            if (_userId is null)
+                return;
+            
+            var boardToSave = new SudokuBoard<SudokuDigit>((row, col) =>
+                _board.Board[row, col].Value);
+            
+            await SudokuRepository.SaveDailySudokuProgress(_userId, _board.Id.ToString(), boardToSave, _isSolved);
         }
     }
 

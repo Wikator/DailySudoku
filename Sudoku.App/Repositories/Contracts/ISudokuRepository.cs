@@ -13,7 +13,6 @@ public interface ISudokuRepository
     Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateOnly date);
     Task<SudokuWithIdAndValidation> GetDailySudokuAsync(string? userId, DateOnly date);
     Task<bool> DailySudokuExists(DateOnly date);
-    Task<(BoardStatus?, BoardStatus?, BoardStatus, BoardStatus?, BoardStatus?)> GetDailySudokuStatuses(
-        string? userId = null, int daysAgo = 0);
+    Task<List<DailySudokuStatus>> GetDailySudokuStatuses(string? userId);
     Task SaveDailySudokuProgress(string userId, string sudokuId, SudokuBoard<SudokuDigit> board, bool isSolved);
 }

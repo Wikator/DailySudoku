@@ -1,15 +1,15 @@
 @using Sudoku.App.Helpers
-@using Sudoku.App.Enums
+@using Sudoku.App.Enums 
 
 @if (Board is not null)
 {
     <table>
         @for (var i = 0; i < 9; i++)
         {
-            <tr class="@($"{ClassName()}-solution-tr")">
+            <tr class="@($"{ClassName}-solution-tr")">
                 @for (var j = 0; j < 9; j++)
                 {
-                    <td class="@($"{ClassName()}-solution-td")">
+                    <td class="@($"{ClassName}-solution-td")">
                         @Board[i, j].ToDigitString()
                     </td>
                 }
@@ -33,7 +33,7 @@
         Board = new SudokuBoard<SudokuDigit>(SudokuDigit.Empty);
     }
 
-    private string ClassName() =>
+    private string ClassName =>
         Solutions switch
         {
             Enums.Solutions.NoSolution => "no",

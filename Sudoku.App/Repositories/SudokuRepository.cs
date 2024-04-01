@@ -134,18 +134,15 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         {
             // language=Cypher
             const string query = """
-                                 MATCH (s:DailySudoku)
+                                 MATCH (s:DailySudoku { date: $date })
                                  RETURN
                                    s.board AS Board,
                                    s.id AS Id
-                                 ORDER BY s.date DESC
-                                 SKIP $daysAgo
-                                 LIMIT 1
                                  """;
 
-            var parameters = new {  };
+            var parameters = new { date };
         
-            var result = await DataAccess.ExecuteWriteSingleAsync(query, parameters);
+            var result = await DataAccess.ExecuteReadSingleAsync(query, parameters);
             var boardString = result["Board"].As<string>();
 
             var board = new SudokuBoard<SudokuCell>((row, col) =>
@@ -176,7 +173,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                 userId
             };
         
-            var result = (await DataAccess.ExecuteWriteSingleAsync(query, parameters))["Result"].As<Dictionary<string, object>>();
+            var result = (await DataAccess.ExecuteReadSingleAsync(query, parameters))["Result"].As<Dictionary<string, object>>();
 
             if (result.TryGetValue("board", out var value))
             {
@@ -209,22 +206,67 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
 
     public async Task<bool> DailySudokuExists(DateOnly date)
     {
-        // language=Cypher
-        const string query = """
-                             MATCH (s:DailySudoku { date: $date })
-                             RETURN COUNT(s) > 0 AS Exists
-                             """;
+        try
+        {
+            // language=Cypher
+            const string query = """
+                                 MATCH (s:DailySudoku { date: $date })
+                                 RETURN COUNT(s) > 0 AS Exists
+                                 """;
 
-        var parameters = new { date };
+            var parameters = new { date };
 
-        var result = await DataAccess.ExecuteReadSingleAsync(query, parameters);
-        return result["Exists"].As<bool>();
+            var result = await DataAccess.ExecuteReadSingleAsync(query, parameters);
+            return result["Exists"].As<bool>();
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
-    public Task<(BoardStatus?, BoardStatus?, BoardStatus, BoardStatus?, BoardStatus?)> GetDailySudokuStatuses(
-        string? userId = null, int daysAgo = 0)
+    public async Task<List<DailySudokuStatus>> GetDailySudokuStatuses(string? userId)
     {
-        throw new NotImplementedException();
+        if (userId is not null)
+        {
+            // language=Cypher
+            const string query = """
+                                 MATCH (s:DailySudoku)
+                                 MATCH (u:User { id: $userId })
+                                 OPTIONAL MATCH (u)-[r:PROGRESS]->(s)
+                                 RETURN CASE
+                                   WHEN r IS NOT NULL THEN { id: s.id, date: s.date, status: CASE WHEN r.isSolved THEN 0 ELSE 1 END }
+                                   ELSE { id: s.id, date: s.date, status: 2 }
+                                 END AS Status
+                                 ORDER BY s.date DESC
+                                 """;
+
+            var parameters = new { userId };
+            var records = await DataAccess.ExecuteReadListAsync(query, parameters);
+            return records.Select(record =>
+            {
+                var dictionary = record["Status"].As<Dictionary<string, object>>();
+                return new DailySudokuStatus(Guid.Parse(dictionary["id"].As<string>()),
+                    DateOnly.FromDateTime(dictionary["date"].As<DateTime>()),
+                    (BoardStatus)dictionary["status"].As<int>());
+            }).ToList();
+        }
+        else
+        {
+            // language=Cypher
+            const string query = """
+                                 MATCH (s:DailySudoku)
+                                 RETURN 
+                                   s.id AS Id,
+                                   s.date AS Date
+                                 ORDER BY s.date DESC
+                                 """;
+
+            var records = await DataAccess.ExecuteReadListAsync(query, new object());
+            return records.Select(record => new DailySudokuStatus(Guid.Parse(record["Id"].As<string>()),
+                    DateOnly.FromDateTime(record["Date"].As<DateTime>()), BoardStatus.Empty)).ToList();
+            
+        }
     }
 
     public async Task SaveDailySudokuProgress(string userId, string sudokuId,
