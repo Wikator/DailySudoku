@@ -26,9 +26,32 @@ Welcome to your new app.
             </div>
         }
     
-        <SudokuBoard Board="_board.Board" OnCellValueChanged="HandleCellChanged" IsSolved="e => _isSolved = e" />
-        <button @onclick="PreviousDay" class="btn btn-warning">Play previous say</button>
-        <button @onclick="Solve" class="btn btn-primary">Solve</button>
+        
+        <SudokuBoard
+            Class="mb-3"
+            Board="_board.Board"
+            OnCellValueChanged="HandleCellChanged"
+            IsSolved="e => _isSolved = e" />
+        
+        <div class="text-center">
+            @_statuses[_currentBoardIndex].Date
+        </div>
+        
+        <div class="text-center">
+            <div class="btn-group ">
+                <button
+                    @onclick="PreviousDay"
+                    class="@(_currentBoardIndex + 1 == _statuses.Count ? "btn btn-warning disabled" : "btn btn-warning")">
+                    Play previous day
+                </button>
+                <button @onclick="Solve" class="btn btn-primary">Solve</button>
+                <button
+                    @onclick="NextDay"
+                    class="@(_currentBoardIndex == 0 ? "btn btn-warning disabled" : "btn btn-warning")">
+                    Play next day
+                </button>
+            </div>
+        </div>
     </div>
 }
 
@@ -36,32 +59,27 @@ Welcome to your new app.
     
     SudokuWithIdAndValidation? _board;
 
-    List<DailySudokuStatus> _statuses = new();
+    List<DailySudokuStatus> _statuses = [];
     
     string? _error;
     bool _isSolved;
     string? _userId;
+    int _currentBoardIndex;
     
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        if (AuthState is null)
-        {
-            _statuses = await SudokuRepository.GetDailySudokuStatuses(null);
-            _board = await SudokuRepository.GetDailySudokuAsync(null, _statuses.First().Date);
-        }
-        else
+        if (AuthState is not null)
         {
             var authState = await AuthState;
             var user = authState.User;
             _userId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-            _statuses = await SudokuRepository.GetDailySudokuStatuses(_userId);
-            Console.WriteLine(_statuses.First().Status);
-            _board = await SudokuRepository.GetDailySudokuAsync(_userId, _statuses.First().Date);
         }
+        
+        _statuses = await SudokuRepository.GetDailySudokuStatuses(_userId);
+        await SetDailySudoku();
     }
 
     private async Task Solve()
@@ -93,7 +111,20 @@ Welcome to your new app.
 
     private async Task PreviousDay()
     {
-        _board = await SudokuRepository.GetDailySudokuAsync(_userId, DateOnly.FromDateTime(DateTime.Now.AddDays(-1)));
+        if (_currentBoardIndex + 1 == _statuses.Count)
+            return;
+
+        _currentBoardIndex++;
+        await SetDailySudoku();
+    }
+
+    private async Task NextDay()
+    {
+        if (_currentBoardIndex == 0)
+            return;
+
+        _currentBoardIndex--;
+        await SetDailySudoku();
     }
 
     private async Task HandleCellChanged()
@@ -106,4 +137,11 @@ Welcome to your new app.
 
         await SudokuRepository.SaveDailySudokuProgress(_userId, _board.Id.ToString(), boardToSave, _isSolved);
     }
+
+    private async Task SetDailySudoku()
+    {
+        _board = await SudokuRepository.GetDailySudokuAsync(_userId,_statuses[_currentBoardIndex].Date);
+        _isSolved = _statuses[_currentBoardIndex].Status == BoardStatus.Solved;
+    }
+        
 }

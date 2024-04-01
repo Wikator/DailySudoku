@@ -3,29 +3,30 @@
 @inject ISudokuService SudokuService
 @rendermode InteractiveServer
 
-<table>
-    @for (var i = 0; i < 9; i++)
-    {
-        <tr>
-            @for (var j = 0; j < 9; j++)
-            {
-                var row = i;
-                var col = j;
-                <td
-                    tabindex="0"
-                    class="@(Board[row, col].IsFixed ? "fixed-digit" : Validation[row, col] ? "wrong-digit" : "digit")"
-                    @ref="_cellRefs[row, col]"
-                    @onclick="_ => Focus(row, col)"
-                    @onkeydown="e => HandleKeyDown(e, row, col)"> @Board[i, j].Value.ToDigitString()
-                </td>
-            }
-        </tr>
-    }
-</table>
-<div class="text-center">
-    <button class="btn btn-warning btn-sm" @onclick="Reset">Reset</button>
+<div class="@Class">
+    <table>
+        @for (var i = 0; i < 9; i++)
+        {
+            <tr>
+                @for (var j = 0; j < 9; j++)
+                {
+                    var row = i;
+                    var col = j;
+                    <td
+                        tabindex="0"
+                        class="@(Board[row, col].IsFixed ? "fixed-digit" : Validation[row, col] ? "wrong-digit" : "digit")"
+                        @ref="_cellRefs[row, col]"
+                        @onclick="_ => Focus(row, col)"
+                        @onkeydown="e => HandleKeyDown(e, row, col)"> @Board[i, j].Value.ToDigitString()
+                    </td>
+                }
+            </tr>
+        }
+    </table>
+    <div class="text-center">
+        <button class="btn btn-warning btn-sm" @onclick="Reset">Reset</button>
+    </div>
 </div>
-
 
 @code {
     
@@ -38,6 +39,7 @@
     
     [Parameter] public EventCallback OnCellValueChanged { get; set; }
     [Parameter] public EventCallback<bool> IsSolved { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
     private SudokuBoard<bool> Validation { get; set; } = new(false);
     private readonly ElementReference[,] _cellRefs = new ElementReference[9, 9];
 
