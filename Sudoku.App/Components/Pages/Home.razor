@@ -14,18 +14,13 @@ Welcome to your new app.
     <div class="container">
         @if(_error is not null)
         {
-            <div class="alert alert-danger" role="alert">
-                @_error
-            </div>
+            <Alert>@_error</Alert>
         }
         
         @if (_isSolved)
         {
-            <div class="alert alert-success">
-                Board is solved!
-            </div>
+            <Alert Color="success">Board is solved!</Alert>
         }
-    
         
         <SudokuBoard
             Class="mb-3"
@@ -39,17 +34,35 @@ Welcome to your new app.
         
         <div class="text-center">
             <div class="btn-group ">
-                <button
-                    @onclick="PreviousDay"
-                    class="@(_currentBoardIndex + 1 == _statuses.Count ? "btn btn-warning disabled" : "btn btn-warning")">
-                    Play previous day
-                </button>
+                @if (_currentBoardIndex + 1 != _statuses.Count)
+                {
+                    <button
+                        @onclick="PreviousDay"
+                        class="btn btn-warning">
+                        &laquo; @_statuses[_currentBoardIndex + 1].Date
+                    </button>
+                }
+                else
+                {
+                    <DisabledButton Color="warning">
+                        &laquo; ----------
+                    </DisabledButton>
+                }
                 <button @onclick="Solve" class="btn btn-primary">Solve</button>
-                <button
-                    @onclick="NextDay"
-                    class="@(_currentBoardIndex == 0 ? "btn btn-warning disabled" : "btn btn-warning")">
-                    Play next day
-                </button>
+                @if (_currentBoardIndex != 0)
+                {
+                    <button
+                        @onclick="NextDay"
+                        class="btn btn-warning">
+                        @_statuses[_currentBoardIndex - 1].Date &raquo;
+                    </button>
+                }
+                else
+                {
+                    <DisabledButton Color="warning">
+                        ---------- &raquo;
+                    </DisabledButton>
+                }
             </div>
         </div>
     </div>

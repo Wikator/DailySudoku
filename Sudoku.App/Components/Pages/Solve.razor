@@ -11,9 +11,7 @@
         
         @if (_isSolved)
         {
-            <div class="alert alert-success">
-                Board is solved!
-            </div>
+            <Alert Color="success">Board is solved!</Alert>
         }
     
         <SudokuBoard Board="_board" IsSolved="e => _isSolved = e" />

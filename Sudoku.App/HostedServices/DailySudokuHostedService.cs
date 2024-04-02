@@ -36,7 +36,6 @@ public class DailySudokuHostedService(IServiceProvider serviceProvider) : Backgr
                     await tmpSudokuRepository.CreateDailySudokuAsync(tmpBoard, tmpDate);
                 }
             }
-                
             
             var delay = nextRunTime - now;
             

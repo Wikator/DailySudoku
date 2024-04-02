@@ -1,0 +1,8 @@
+<div class="@($"alert alert-{Color}")" role="alert">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Color { get; set; } = "danger";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

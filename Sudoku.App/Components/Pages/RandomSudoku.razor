@@ -8,12 +8,12 @@
 <div class="container">
     @if (_boardSolved)
     {
-        <div class="alert alert-success">Board solved!</div>
+        <Alert Color="success">Puzzle solved successfully</Alert>
     }
     
     @if (_boardSaved)
     {
-        <div class="alert alert-success">Puzzle saved successfully</div>
+        <Alert Color="success">Puzzle saved successfully</Alert>
     }
     
     @if (Board is null)

@@ -6,9 +6,7 @@
 <div class="container">
     @if (!string.IsNullOrEmpty(_errorMessage))
     {
-        <div class="alert alert-danger">
-            @_errorMessage
-        </div>
+        <Alert>@_errorMessage</Alert>
     }
     
     <EditForm method="post" Model="LoginModel" OnValidSubmit="LoginUser" FormName="Register" >

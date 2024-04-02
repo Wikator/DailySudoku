@@ -1,5 +1,4 @@
 @page "/sudoku/maker"
-@using Sudoku.App.Extensions
 @inject ISudokuRepository SudokuRepository
 @inject ISudokuService SudokuService
 @attribute [Authorize]
@@ -11,26 +10,20 @@
     @switch (_solutions)
     {
         case Solutions.NoSolution:
-            <div class="alert alert-danger">
-            No solutions
-        </div>
+            <Alert>No solutions</Alert>
             break;
         case Solutions.OneSolution:
-            <div class="alert alert-success">
-            One solution
-        </div>
+            <Alert Color="success">One solution</Alert>
             break;
         case Solutions.MultipleSolutions:
         default:
-            <div class="alert alert-warning">
-            Multiple solutions
-        </div>
+            <Alert Color="warning">Multiple solutions</Alert>
             break;
     }
     
     @if (_boardSaved)
     {
-        <div class="alert alert-success">Puzzle saved successfully</div>
+        <Alert Color="success">Puzzle saved successfully</Alert>
     }
 
     <SudokuBoard Board="Board" OnCellValueChanged="HowManySolutions"/>
