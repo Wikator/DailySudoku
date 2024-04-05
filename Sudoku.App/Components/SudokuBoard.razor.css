@@ -1,11 +1,55 @@
-table {
-    margin:1em auto;
+li:nth-child(n):nth-child(-n+9) {
+    border-top-width: 0.15em;
 }
-td {
-    height:30px;
-    width:30px;
-    border:1px solid black;
-    text-align:center;
+li:nth-child(n+73):nth-child(-n+81) {
+    border-bottom-width: 0.15em;
+}
+li:nth-child(3n) {
+    border-right-width: 0.15em;
+}
+li:nth-child(9n+1) {
+    border-left-width: 0.15em;
+}
+li:nth-child(n+19):nth-child(-n+27) {
+    border-bottom-width: 0.15em;
+}
+li:nth-child(n+46):nth-child(-n+54) {
+    border-bottom-width: 0.15em;
+}
+ul {
+    display: grid;
+    grid-template-columns: repeat(9, 3.5vw);
+    grid-template-rows: repeat(9, 3.5vw);
+    justify-content: center;
+    align-content: center;
+    grid-gap: 0rem;
+    list-style: none;
+    margin: 0 0 2vw;
+    padding: 0;
+    font-size: calc(2vw + 0.625em);
+}
+li {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    border: 0.0625em solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+li span {
+    margin-top: 0.015em;
+    user-select: none;
+}
+
+li:hover {
+    cursor: pointer;
+    background-color: #f0f0f0;
+}
+
+li:focus {
+    background-color: #add8e6;
+    outline: none;
 }
 
 .digit {
@@ -18,17 +62,4 @@ td {
 
 .fixed-digit {
     color: blue;
-}
-
-td:first-child {
-    border-left:solid black;
-}
-td:nth-child(3n) {
-    border-right:solid black ;
-}
-tr:first-child {
-    border-top:solid black;
-}
-tr:nth-child(3n) td {
-    border-bottom:solid black;
 }

@@ -3,29 +3,26 @@
 @inject ISudokuService SudokuService
 @rendermode InteractiveServer
 
-<div class="@Class">
-    <table>
+<div class="@($"{Class} container")">
+    <ul>
         @for (var i = 0; i < 9; i++)
         {
-            <tr>
-                @for (var j = 0; j < 9; j++)
-                {
-                    var row = i;
-                    var col = j;
-                    <td
-                        tabindex="0"
-                        class="@(Board[row, col].IsFixed ? "fixed-digit" : Validation[row, col] ? "wrong-digit" : "digit")"
-                        @ref="_cellRefs[row, col]"
-                        @onclick="_ => Focus(row, col)"
-                        @onkeydown="e => HandleKeyDown(e, row, col)"> @Board[i, j].Value.ToDigitString()
-                    </td>
-                }
-            </tr>
+            for (var j = 0; j < 9; j++)
+            {
+                var row = i;
+                var col = j;
+                <li
+                    tabindex="0"
+                    @ref="_cellRefs[row, col]"
+                    @onclick="_ => Focus(row, col)"
+                    @onkeydown="e => HandleKeyDown(e, row, col)">
+                    <span class="@(Board[row, col].IsFixed ? "fixed-digit" : Validation[row, col] ? "wrong-digit" : "digit")">
+                        @Board[i, j].Value.ToDigitString()
+                    </span>
+                </li>
+            }
         }
-    </table>
-    <div class="text-center">
-        <button class="btn btn-warning btn-sm" @onclick="Reset">Reset</button>
-    </div>
+    </ul>
 </div>
 
 @code {
