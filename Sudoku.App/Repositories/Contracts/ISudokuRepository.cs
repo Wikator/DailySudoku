@@ -11,8 +11,9 @@ public interface ISudokuRepository
     Task<PagedResult<SudokuWithId>> GetUserPagedSudoku(string userId, int pageNumber, int pageSize);
     Task<SudokuBoard<SudokuCell>?> GetSudoku(string id);
     Task CreateDailySudokuAsync(SudokuBoard<SudokuDigit> board, DateOnly date);
-    Task<SudokuWithIdAndValidation> GetDailySudokuAsync(string? userId, DateOnly date);
+    Task<DailySudokuWithProgress> GetDailySudokuAsync(string? userId, DateOnly date);
     Task<bool> DailySudokuExists(DateOnly date);
     Task<List<DailySudokuStatus>> GetDailySudokuStatuses(string? userId);
-    Task SaveDailySudokuProgress(string userId, string sudokuId, SudokuBoard<SudokuDigit> board, bool isSolved);
+    Task SaveDailySudokuProgress(string userId, string sudokuId, SudokuBoard<SudokuDigit> board, bool isSolved,
+        TimeSpan timeTaken);
 }

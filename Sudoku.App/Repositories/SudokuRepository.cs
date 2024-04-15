@@ -128,7 +128,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
         await DataAccess.ExecuteWriteAsync(query, parameters);
     }
 
-    public async Task<SudokuWithIdAndValidation> GetDailySudokuAsync(string? userId, DateOnly date)
+    public async Task<DailySudokuWithProgress> GetDailySudokuAsync(string? userId, DateOnly date)
     {
         if (userId is null)
         {
@@ -152,7 +152,8 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                     IsFixed = boardString[row * 9 + col] != '0'
                 });
 
-            return new SudokuWithIdAndValidation(Guid.Parse(result["Id"].As<string>()), board);
+            return new DailySudokuWithProgress(Guid.Parse(result["Id"].As<string>()), 
+                TimeSpan.Zero, board);
         }
         else
         {
@@ -162,8 +163,8 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                                  MATCH (u:User { id: $userId })
                                  OPTIONAL MATCH (u)-[r:PROGRESS]->(s)
                                  RETURN CASE
-                                   WHEN r IS NOT NULL THEN { originalBoard: s.board, userBoard: r.board, id: s.id }
-                                   ELSE { board: s.board, id: s.id }
+                                   WHEN r IS NOT NULL THEN { originalBoard: s.board, seconds: r.seconds, userBoard: r.board, id: s.id }
+                                   ELSE { board: s.board, seconds: 0, id: s.id }
                                  END AS Result
                                  """;
 
@@ -174,7 +175,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
             };
         
             var result = (await DataAccess.ExecuteReadSingleAsync(query, parameters))["Result"].As<Dictionary<string, object>>();
-
+            
             if (result.TryGetValue("board", out var value))
             {
                 var boardString = value.As<string>();
@@ -185,7 +186,8 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                         IsFixed = boardString[row * 9 + col] != '0'
                     });
 
-                return new SudokuWithIdAndValidation(Guid.Parse(result["id"].As<string>()), board);
+                return new DailySudokuWithProgress(Guid.Parse(result["id"].As<string>()),
+                    TimeSpan.FromSeconds(result["seconds"].As<int>()), board);
             }
             else
             {
@@ -199,7 +201,8 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
                         IsFixed = originalBoardString[row * 9 + col] != '0'
                     });
 
-                return new SudokuWithIdAndValidation(Guid.Parse(result["id"].As<string>()), board);
+                return new DailySudokuWithProgress(Guid.Parse(result["id"].As<string>()),
+                    TimeSpan.FromSeconds(result["seconds"].As<int>()), board);
             }
         }
     }
@@ -270,14 +273,14 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
     }
 
     public async Task SaveDailySudokuProgress(string userId, string sudokuId,
-        SudokuBoard<SudokuDigit> board, bool isSolved)
+        SudokuBoard<SudokuDigit> board, bool isSolved, TimeSpan timeTaken)
     {
         // language=Cypher
         const string query = """
                              MATCH (s:DailySudoku { id: $sudokuId })
                              MATCH (u:User { id: $userId })
                              MERGE (u)-[r:PROGRESS]->(s)
-                             SET r.board = $board, r.isSolved = $isSolved
+                             SET r.board = $board, r.isSolved = $isSolved, r.seconds = $seconds
                              """;
 
         var parameters = new
@@ -285,6 +288,7 @@ public class SudokuRepository(INeo4JDataAccess dataAccess) : ISudokuRepository
             sudokuId,
             userId,
             isSolved,
+            seconds = (int)timeTaken.TotalSeconds,
             board = board.Board.ToBoardString()
         };
 

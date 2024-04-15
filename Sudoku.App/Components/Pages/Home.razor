@@ -1,6 +1,6 @@
 ﻿@page "/"
-@inject ISudokuService SudokuService
 @inject ISudokuRepository SudokuRepository
+@implements IAsyncDisposable
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <PageTitle>Home</PageTitle>
@@ -12,11 +12,6 @@ Welcome to your new app.
 @if (_board is not null)
 {
     <div class="container">
-        @if(_error is not null)
-        {
-            <Alert>@_error</Alert>
-        }
-        
         @if (_isSolved)
         {
             <Alert Color="success">Board is solved!</Alert>
@@ -25,42 +20,46 @@ Welcome to your new app.
         <SudokuBoard
             Class="mb-3"
             Board="_board.Board"
-            OnCellValueChanged="HandleCellChanged"
-            IsSolved="e => _isSolved = e" />
-        
-        <div class="text-center">
-            @_statuses[_currentBoardIndex].Date
+            OnCellValueChanged="SaveProgress"
+            IsSolved="BoardIsSolvedEventHandler" />
+
+        <div class="text-center mt-3">
+            <h3 class="text-muted">Elapsed Time: 
+                <span class="badge bg-secondary">@_timeTaken.ToString(@"hh\:mm\:ss")</span>
+            </h3>
         </div>
-        
+
         <div class="text-center">
-            <div class="btn-group ">
+            <div class="btn-group">
                 @if (_currentBoardIndex + 1 != _statuses.Count)
                 {
                     <button
                         @onclick="PreviousDay"
                         class="btn btn-warning">
-                        &laquo; @_statuses[_currentBoardIndex + 1].Date
+                        &laquo; @_statuses[_currentBoardIndex + 1].Date.ToString("dd/MM/yyyy")
                     </button>
                 }
                 else
                 {
                     <DisabledButton Color="warning">
-                        &laquo; ----------
+                        &laquo; @_statuses[_currentBoardIndex].Date.AddDays(-1).ToString("dd/MM/yyyy")
                     </DisabledButton>
                 }
-                <button @onclick="Solve" class="btn btn-primary">Solve</button>
+                <DisabledButton>
+                    @_statuses[_currentBoardIndex].Date.ToString("dd/MM/yyyy")
+                </DisabledButton>
                 @if (_currentBoardIndex != 0)
                 {
                     <button
                         @onclick="NextDay"
                         class="btn btn-warning">
-                        @_statuses[_currentBoardIndex - 1].Date &raquo;
+                        @_statuses[_currentBoardIndex - 1].Date.ToString("dd/MM/yyyy") &raquo;
                     </button>
                 }
                 else
                 {
                     <DisabledButton Color="warning">
-                        ---------- &raquo;
+                        @_statuses[_currentBoardIndex].Date.AddDays(1).ToString("dd/MM/yyyy") &raquo;
                     </DisabledButton>
                 }
             </div>
@@ -70,14 +69,15 @@ Welcome to your new app.
 
 @code {
     
-    SudokuWithIdAndValidation? _board;
+    DailySudokuWithProgress? _board;
 
     List<DailySudokuStatus> _statuses = [];
     
-    string? _error;
     bool _isSolved;
     string? _userId;
     int _currentBoardIndex;
+    TimeSpan _timeTaken;
+    Timer? _timer;
     
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
@@ -95,31 +95,19 @@ Welcome to your new app.
         await SetDailySudoku();
     }
 
-    private async Task Solve()
+    protected override void OnAfterRender(bool firstRender)
     {
-        if (_board is null)
-            return;
-
-        var result = SudokuService.ValidateAndSolve(_board.Board);
-
-        if (result is null)
+        if (!_isSolved)
         {
-            _error = "No solution found";
+            _timer ??= new Timer(_ => UpdateElapsedTime(),
+                null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(1));
         }
-        else
-        {
-            _error = null;
-            _board = _board with { Board = result };
-            _isSolved = true;
-            
-            if (_userId is null)
-                return;
-            
-            var boardToSave = new SudokuBoard<SudokuDigit>((row, col) =>
-                _board.Board[row, col].Value);
-            
-            await SudokuRepository.SaveDailySudokuProgress(_userId, _board.Id.ToString(), boardToSave, _isSolved);
-        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        _timer?.DisposeAsync();
+        await SaveProgress();
     }
 
     private async Task PreviousDay()
@@ -128,6 +116,7 @@ Welcome to your new app.
             return;
 
         _currentBoardIndex++;
+        await SaveProgress();
         await SetDailySudoku();
     }
 
@@ -137,24 +126,49 @@ Welcome to your new app.
             return;
 
         _currentBoardIndex--;
+        await SaveProgress();
         await SetDailySudoku();
-    }
-
-    private async Task HandleCellChanged()
-    {
-        if (_board is null || _userId is null)
-            return;
-        
-        var boardToSave = new SudokuBoard<SudokuDigit>((row, col) =>
-            _board.Board[row, col].Value);
-
-        await SudokuRepository.SaveDailySudokuProgress(_userId, _board.Id.ToString(), boardToSave, _isSolved);
     }
 
     private async Task SetDailySudoku()
     {
         _board = await SudokuRepository.GetDailySudokuAsync(_userId,_statuses[_currentBoardIndex].Date);
         _isSolved = _statuses[_currentBoardIndex].Status == BoardStatus.Solved;
-    }
+        _timeTaken = _board.TimeTaken;
         
+        if (_isSolved)
+        {
+            _timer?.DisposeAsync();
+            _timer = null;
+        }
+    }
+    
+    private async Task SaveProgress()
+    {
+        if (_board is null || _userId is null)
+            return;
+        
+        var boardToSave = new SudokuBoard<SudokuDigit>((row, col) =>
+            _board.Board[row, col].Value);
+        
+        await SudokuRepository.SaveDailySudokuProgress(_userId, _board.Id.ToString(), boardToSave,
+            _isSolved, _timeTaken);
+    }
+    
+    private void UpdateElapsedTime()
+    {
+        _timeTaken = _timeTaken.Add(TimeSpan.FromSeconds(1));
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private async Task BoardIsSolvedEventHandler(bool isSolved)
+    {
+        _isSolved = isSolved;
+
+        if (_timer is null)
+            return;
+        
+        await _timer.DisposeAsync();
+        _timer = null;
+    }
 }
